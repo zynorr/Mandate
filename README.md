@@ -20,6 +20,14 @@ The database is created automatically at `data/mandate.db`. On first run, Mandat
 
 To reset local data, stop the server and remove `data/mandate.db`, `data/mandate.db-wal`, and `data/mandate.db-shm`.
 
+## Vercel deployment
+
+1. Import `zynorr/Mandate` from GitHub.
+2. Leave the Vercel Root Directory at the repository root.
+3. Vercel will read `vercel.json`, which uses the Next.js preset, `npm install`, `npm run build --workspace @mandate/web`, and output directory `apps/web/.next`.
+4. No environment variables are required by default. On Vercel the app uses `/tmp/mandate.db`; it is ephemeral and resets when a function instance is recycled.
+5. Set `MANDATE_DATABASE_PATH=/tmp/mandate.db` only if you want to override that path.
+
 ## Scripts
 
 | Command | Purpose |

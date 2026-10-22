@@ -38,6 +38,17 @@ function repositoryRoot(): string {
 }
 
 function resolveDatabasePath(value: string | undefined): string {
+  if (!value) {
+    if (
+      process.env.VERCEL === "1" ||
+      Boolean(process.env.NOW_REGION)
+    ) {
+      return path.join(
+        process.env.TMPDIR || process.env.TEMP || "/tmp",
+        "mandate.db",
+      );
+    }
+  }
   const root = repositoryRoot();
   if (!value) return path.join(root, "data", "mandate.db");
   return path.isAbsolute(value)
