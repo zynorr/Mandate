@@ -1,0 +1,1370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mandate — pitch deck</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: 13.333in 7.5in;
+        margin: 0;
+      }
+
+      :root {
+        --paper: #f7f3eb;
+        --ivory: #fffdf7;
+        --ink: #1c1a16;
+        --ink-soft: #55503f;
+        --muted: #7d766a;
+        --indigo: #55618a;
+        --evergreen: #1f6b4a;
+        --ochre: #a8721a;
+        --brick: #a6432e;
+        --rule: rgba(28, 26, 22, 0.16);
+        --rule-soft: rgba(28, 26, 22, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: var(--ink);
+        font-family: "Manrope", "Segoe UI", system-ui, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .slide {
+        position: relative;
+        width: 1280px;
+        height: 720px;
+        overflow: hidden;
+        padding: 56px 72px 64px;
+        background: var(--paper);
+        page-break-after: always;
+        break-after: page;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      .slide-dark {
+        background: #14231d;
+        color: #f2efe6;
+      }
+
+      .slide-dark .kicker,
+      .slide-dark .eyebrow {
+        color: #9fc4b1;
+      }
+
+      .slide-dark .foot {
+        color: rgba(242, 239, 230, 0.55);
+        border-top-color: rgba(242, 239, 230, 0.22);
+      }
+
+      .slide-dark h1,
+      .slide-dark h2 {
+        color: #fbf8f0;
+      }
+
+      .kicker {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 26px;
+      }
+
+      .kicker span:first-child {
+        color: var(--indigo);
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Fraunces", Georgia, serif;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 66px;
+        line-height: 1.03;
+      }
+
+      h2 {
+        font-size: 42px;
+        line-height: 1.1;
+      }
+
+      h3 {
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      em {
+        font-style: italic;
+        color: var(--indigo);
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .eyebrow {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12.5px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--indigo);
+        margin: 0 0 18px;
+      }
+
+      .lede {
+        font-size: 21px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+        max-width: 860px;
+      }
+
+      .rule {
+        height: 1px;
+        background: var(--rule);
+        margin: 26px 0;
+      }
+
+      .foot {
+        position: absolute;
+        left: 72px;
+        right: 72px;
+        bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid var(--rule-soft);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 44px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--ivory);
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        padding: 22px 24px;
+      }
+
+      .card p {
+        color: var(--ink-soft);
+        font-size: 15.5px;
+        line-height: 1.55;
+      }
+
+      .card-tag {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--indigo);
+        margin-bottom: 10px;
+      }
+
+      .mono {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 13.5px;
+      }
+
+      .list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .list li {
+        position: relative;
+        padding-left: 26px;
+        font-size: 16.5px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+      }
+
+      .list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 9px;
+        width: 10px;
+        height: 10px;
+        border: 2px solid var(--evergreen);
+        border-radius: 50%;
+      }
+
+      .list.no li::before {
+        border-color: var(--brick);
+        border-radius: 0;
+        height: 2px;
+        top: 13px;
+        width: 12px;
+        border-width: 0 0 2px 0;
+      }
+
+      .list strong {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* cover */
+      .cover {
+        justify-content: space-between;
+      }
+
+      .cover-mark {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--indigo);
+      }
+
+      .cover h1 {
+        font-size: 78px;
+        max-width: 960px;
+      }
+
+      .cover-meta {
+        display: flex;
+        gap: 40px;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .cover-band {
+        display: flex;
+        gap: 0;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .cover-band div {
+        flex: 1;
+        padding: 18px 24px 18px 0;
+        border-right: 1px solid var(--rule-soft);
+      }
+
+      .cover-band div:last-child {
+        border-right: 0;
+        padding-right: 0;
+      }
+
+      .cover-band strong {
+        display: block;
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .cover-band span {
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+
+      /* problem */
+      .pull {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 34px;
+        line-height: 1.25;
+        color: var(--ink);
+        border-left: 4px solid var(--ochre);
+        padding-left: 24px;
+        margin-top: 8px;
+      }
+
+      .stat-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 26px;
+      }
+
+      .stat {
+        background: var(--ivory);
+        border-top: 3px solid var(--indigo);
+        padding: 18px 20px;
+      }
+
+      .stat h3 {
+        font-size: 17px;
+        margin-bottom: 8px;
+      }
+
+      .stat p {
+        font-size: 14.5px;
+        color: var(--ink-soft);
+        line-height: 1.5;
+      }
+
+      /* steps */
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+
+      .step {
+        background: var(--ivory);
+        border: 1px solid var(--rule);
+        padding: 18px 16px 20px;
+        min-height: 236px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .step-num {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        color: var(--indigo);
+      }
+
+      .step h3 {
+        font-size: 17.5px;
+      }
+
+      .step p {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+      }
+
+      .step-tag {
+        margin-top: auto;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-top: 1px solid var(--rule-soft);
+        padding-top: 10px;
+      }
+
+      /* record card */
+      .record {
+        background: var(--ivory);
+        border: 1px solid var(--rule);
+        box-shadow: 10px 10px 0 rgba(28, 26, 22, 0.06);
+        padding: 26px 28px;
+        position: relative;
+      }
+
+      .record-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .record-kicker {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .badge {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border: 1px solid var(--rule);
+        padding: 3px 8px;
+        color: var(--ink-soft);
+        background: var(--paper);
+      }
+
+      .record h3 {
+        font-size: 24px;
+        margin: 6px 0 4px;
+      }
+
+      .record-sub {
+        font-size: 14.5px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 96px 1fr 18px;
+        gap: 12px;
+        align-items: center;
+        padding: 9px 0;
+        border-top: 1px solid var(--rule-soft);
+        font-size: 15px;
+      }
+
+      .row-label {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .row-value {
+        color: var(--ink);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 13.5px;
+      }
+
+      .tick {
+        color: var(--evergreen);
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .verdict {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 18px;
+        padding: 14px 16px;
+        background: rgba(31, 107, 74, 0.08);
+        border: 1px solid rgba(31, 107, 74, 0.35);
+      }
+
+      .verdict strong {
+        display: block;
+        font-size: 15.5px;
+        color: var(--evergreen);
+      }
+
+      .verdict small {
+        font-size: 12.5px;
+        color: var(--ink-soft);
+      }
+
+      .pill {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--evergreen);
+        border: 1px solid rgba(31, 107, 74, 0.5);
+        padding: 5px 10px;
+      }
+
+      .record-foot {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+
+      /* table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 15.5px;
+      }
+
+      th {
+        text-align: left;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 500;
+        padding: 0 14px 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--rule-soft);
+        color: var(--ink-soft);
+        vertical-align: top;
+      }
+
+      td:first-child {
+        width: 210px;
+      }
+
+      .v {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border: 1px solid;
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      .v-match {
+        color: var(--evergreen);
+        border-color: rgba(31, 107, 74, 0.45);
+        background: rgba(31, 107, 74, 0.08);
+      }
+
+      .v-review {
+        color: var(--ochre);
+        border-color: rgba(168, 114, 26, 0.45);
+        background: rgba(168, 114, 26, 0.08);
+      }
+
+      .v-fail {
+        color: var(--brick);
+        border-color: rgba(166, 67, 46, 0.45);
+        background: rgba(166, 67, 46, 0.08);
+      }
+
+      .v-neutral {
+        color: var(--indigo);
+        border-color: rgba(85, 97, 138, 0.45);
+        background: rgba(85, 97, 138, 0.08);
+      }
+
+      /* chain proof */
+      .chain-card {
+        background: #101a16;
+        border: 1px solid rgba(242, 239, 230, 0.18);
+        padding: 24px 26px;
+        color: #e9e5da;
+      }
+
+      .chain-card dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 132px 1fr;
+        row-gap: 13px;
+        column-gap: 18px;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12.5px;
+      }
+
+      .chain-card dt {
+        color: #9fc4b1;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 11.5px;
+        padding-top: 2px;
+      }
+
+      .chain-card dd {
+        margin: 0;
+        word-break: break-all;
+        color: #f2efe6;
+      }
+
+      .note {
+        font-size: 14.5px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+        border-left: 3px solid var(--indigo);
+        padding-left: 16px;
+      }
+
+      .slide-dark .note {
+        color: #cfd8d2;
+        border-left-color: #7fb79a;
+      }
+
+      .roadmap {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+        margin-top: 6px;
+      }
+
+      .phase {
+        background: var(--ivory);
+        border: 1px solid var(--rule);
+        padding: 20px 22px 22px;
+      }
+
+      .phase .phase-tag {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--indigo);
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .phase h3 {
+        margin-bottom: 12px;
+      }
+
+      .phase ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .phase li {
+        font-size: 14px;
+        line-height: 1.42;
+        color: var(--ink-soft);
+        padding-left: 16px;
+        position: relative;
+      }
+
+      .phase li::before {
+        content: "–";
+        position: absolute;
+        left: 0;
+        color: var(--muted);
+      }
+
+      .close-quote {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 46px;
+        line-height: 1.2;
+        max-width: 940px;
+      }
+
+      .close-links {
+        display: flex;
+        gap: 34px;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 13.5px;
+        letter-spacing: 0.06em;
+        color: #9fc4b1;
+        margin-top: 34px;
+      }
+
+      .split-label {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 11.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 01 cover -->
+    <section class="slide cover">
+      <div class="cover-mark">Mandate</div>
+
+      <div>
+        <p class="eyebrow">Agent authorization evidence · BOT Chain Bohr testnet</p>
+        <h1>Approve the action.<br />Verify what <em>happened</em>.</h1>
+        <p class="lede" style="margin-top: 24px">
+          A read-only evidence ledger that compares a human-approved intent with
+          what a BOT Chain smart account actually did — and keeps the gaps
+          visible.
+        </p>
+      </div>
+
+      <div class="cover-band">
+        <div>
+          <strong>Read-only</strong>
+          <span>No keys, signing, or custody</span>
+        </div>
+        <div>
+          <strong>Specific</strong>
+          <span>Target, method, value, policy version</span>
+        </div>
+        <div>
+          <strong>Honest</strong>
+          <span>Missing evidence never becomes a pass</span>
+        </div>
+        <div>
+          <strong>Anchored</strong>
+          <span>Hashes recorded on chain, by choice</span>
+        </div>
+      </div>
+
+      <div class="cover-meta">
+        <span>Product pitch</span>
+        <span>October 2026</span>
+        <span>Chain ID 968 · ERC-4337 v0.7</span>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>01</span>
+      </div>
+    </section>
+
+    <!-- 02 problem -->
+    <section class="slide">
+      <div class="kicker">
+        <span>The problem</span>
+        <span>02</span>
+      </div>
+
+      <h2>“It happened on-chain” is not the same as “it was authorized.”</h2>
+
+      <p class="lede" style="margin-top: 20px">
+        A transaction hash proves something was submitted. It does not show who
+        approved the target, the method, or the value — and it says nothing
+        about whether that action was the one a human actually agreed to.
+      </p>
+
+      <div class="stat-row">
+        <div class="stat">
+          <h3>Agents move fast</h3>
+          <p>
+            Smart accounts and ERC-4337 UserOperations let an agent act without
+            a person in the loop for every transaction.
+          </p>
+        </div>
+        <div class="stat">
+          <h3>Approval context is lost</h3>
+          <p>
+            The decision lives in a chat, a ticket, or someone's memory. The
+            chain keeps only the execution.
+          </p>
+        </div>
+        <div class="stat">
+          <h3>Reviewers get a hash</h3>
+          <p>
+            Auditors are handed explorers and raw call data, then asked to
+            reconstruct intent after the fact.
+          </p>
+        </div>
+      </div>
+
+      <p class="pull" style="margin-top: 30px">
+        The gap is not another monitoring dashboard. It is a durable link
+        between the approved action and the observed one.
+      </p>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>02</span>
+      </div>
+    </section>
+
+    <!-- 03 product -->
+    <section class="slide">
+      <div class="kicker">
+        <span>The product</span>
+        <span>03</span>
+      </div>
+
+      <h2>An evidence ledger, not a wallet.</h2>
+
+      <div class="grid-2" style="margin-top: 26px">
+        <div>
+          <p class="lede" style="font-size: 19px">
+            Mandate records the action a human approved, the policy version that
+            applied, and the public transaction or UserOperation that actually
+            occurred. It then shows where the record matches, where it does not,
+            and what evidence is missing.
+          </p>
+
+          <div class="rule"></div>
+
+          <ul class="list">
+            <li><strong>Versioned mandates.</strong> Policies publish as immutable versions with content hashes.</li>
+            <li><strong>Narrow intents.</strong> One target, one method, one native value, one approver.</li>
+            <li><strong>Public evidence only.</strong> RPC, explorer, and bundler reads — nothing signed.</li>
+            <li><strong>Exportable reports.</strong> JSON and Markdown with a report fingerprint.</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="split-label">Deliberate boundaries</div>
+          <ul class="list no">
+            <li>No wallet connection, keys, or signing</li>
+            <li>No custody, gas sponsorship, or UserOperation submission</li>
+            <li>No on-chain enforcement — policies are review rules</li>
+            <li>No claim of success before a receipt exists</li>
+            <li>Testnet only; chain ID is validated against 968</li>
+          </ul>
+
+          <div class="card" style="margin-top: 22px; border-left: 3px solid var(--indigo)">
+            <p>
+              Boundaries are a feature. A tool that cannot move funds is a tool
+              a reviewer can trust with the record.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>03</span>
+      </div>
+    </section>
+
+    <!-- 04 how it works -->
+    <section class="slide">
+      <div class="kicker">
+        <span>How it works</span>
+        <span>04</span>
+      </div>
+
+      <h2>From an approved action to an audit record.</h2>
+
+      <div class="steps" style="margin-top: 28px">
+        <article class="step">
+          <span class="step-num">01</span>
+          <h3>Register the smart account</h3>
+          <p>Add the BOT Chain testnet account you want to review. This is the identity evidence is matched against.</p>
+          <span class="step-tag">Account record</span>
+        </article>
+        <article class="step">
+          <span class="step-num">02</span>
+          <h3>Publish a review policy</h3>
+          <p>Allowed targets, method selectors, value caps, expiry, chain ID. Each publication is a new version.</p>
+          <span class="step-tag">Policy v1 · v2 · v3</span>
+        </article>
+        <article class="step">
+          <span class="step-num">03</span>
+          <h3>Approve a specific intent</h3>
+          <p>One exact action, one approver, pinned to a policy snapshot and a content fingerprint.</p>
+          <span class="step-tag">Approval record</span>
+        </article>
+        <article class="step">
+          <span class="step-num">04</span>
+          <h3>Attach public evidence</h3>
+          <p>A transaction or UserOperation is fetched, checked against the sender, then compared field by field.</p>
+          <span class="step-tag">RPC · BOT Scan · Bundler</span>
+        </article>
+        <article class="step">
+          <span class="step-num">05</span>
+          <h3>Review or export</h3>
+          <p>Inspect every comparison and coverage note, or export the record with a content fingerprint.</p>
+          <span class="step-tag">JSON + Markdown</span>
+        </article>
+      </div>
+
+      <p class="note" style="margin-top: 26px">
+        Five steps, no wallet connection. Discovery can also surface recent
+        account activity through BOT Scan when no transaction hash is supplied.
+      </p>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>04</span>
+      </div>
+    </section>
+
+    <!-- 05 the record -->
+    <section class="slide">
+      <div class="kicker">
+        <span>The core object</span>
+        <span>05</span>
+      </div>
+
+      <div class="grid-2" style="gap: 52px; align-items: start">
+        <div>
+          <h2>A comparison, field by field.</h2>
+          <p class="lede" style="font-size: 18.5px; margin-top: 18px">
+            The unit of the product is a versioned mandate plus an evidence
+            comparison — not a chat, an approval feed, or a transaction builder.
+          </p>
+
+          <div class="rule"></div>
+
+          <ul class="list">
+            <li><strong>Intent match</strong> — did the observed call match what was approved?</li>
+            <li><strong>Policy result</strong> — does it satisfy the pinned policy snapshot?</li>
+            <li><strong>Chain result</strong> — did the receipt report success?</li>
+            <li><strong>Attribution</strong> — is the sender the registered account?</li>
+          </ul>
+
+          <p class="note" style="margin-top: 22px">
+            Four separate signals. A successful transaction can still be out of
+            policy; a failed one can still be attributed.
+          </p>
+        </div>
+
+        <article class="record">
+          <div class="record-head">
+            <span class="record-kicker">Illustrative review record</span>
+            <span class="badge">Sample</span>
+          </div>
+          <h3>Vendor settlement · invoice 1042</h3>
+          <p class="record-sub">One approved transfer, compared field by field.</p>
+
+          <div class="row">
+            <span class="row-label">Intent</span>
+            <span class="row-value">Settle sample invoice</span>
+            <span class="tick">✓</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Target</span>
+            <span class="row-value">0x75ed…0fe3</span>
+            <span class="tick">✓</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Method</span>
+            <span class="row-value">transfer(address,uint256)</span>
+            <span class="tick">✓</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Value</span>
+            <span class="row-value">0 BOT</span>
+            <span class="tick">✓</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Coverage</span>
+            <span class="row-value">Complete for observed fields</span>
+            <span class="tick">✓</span>
+          </div>
+
+          <div class="verdict">
+            <div>
+              <strong>Matches the approved intent</strong>
+              <small>Not a guarantee of unobserved behavior.</small>
+            </div>
+            <span class="pill">Matched</span>
+          </div>
+
+          <div class="record-foot">
+            <span>Intent fingerprint 0x91c2…7af4</span>
+            <span>Stored locally</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>05</span>
+      </div>
+    </section>
+
+    <!-- 06 verdicts -->
+    <section class="slide">
+      <div class="kicker">
+        <span>Review model</span>
+        <span>06</span>
+      </div>
+
+      <h2>Six verdicts. The most conservative one wins.</h2>
+
+      <div style="margin-top: 26px">
+        <table>
+          <thead>
+            <tr>
+              <th>Verdict</th>
+              <th>What it means</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="v v-match">matched</span></td>
+              <td>Observed fields match the linked intent and the recorded policy snapshot.</td>
+            </tr>
+            <tr>
+              <td><span class="v v-fail">out_of_policy</span></td>
+              <td>The action belongs to the agent, but a target, method, value, or policy check differs.</td>
+            </tr>
+            <tr>
+              <td><span class="v v-fail">failed</span></td>
+              <td>The chain reports failure. The record is preserved without treating it as authorized.</td>
+            </tr>
+            <tr>
+              <td><span class="v v-review">unattributed</span></td>
+              <td>No approved intent is attached. The action stays visible for review.</td>
+            </tr>
+            <tr>
+              <td><span class="v v-review">needs_review</span></td>
+              <td>Coverage is incomplete. Missing evidence is never converted into a pass.</td>
+            </tr>
+            <tr>
+              <td><span class="v v-neutral">pending</span></td>
+              <td>Not yet confirmed. No success claim is made before a receipt.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note" style="margin-top: 24px; max-width: 900px">
+        Status language is the product. “Submitted” and “succeeded” are separate
+        states, and every observed field names its source with a fetched-at
+        timestamp.
+      </p>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>06</span>
+      </div>
+    </section>
+
+    <!-- 07 coverage -->
+    <section class="slide">
+      <div class="kicker">
+        <span>Coverage</span>
+        <span>07</span>
+      </div>
+
+      <h2>What Mandate checks — and what it does not.</h2>
+
+      <div class="grid-2" style="margin-top: 26px">
+        <div class="card">
+          <div class="card-tag" style="color: var(--evergreen)">Checked</div>
+          <ul class="list">
+            <li>Chain ID is 968 and the observed sender matches the registered account</li>
+            <li>Target, method selector, native value, policy expiry, daily caps</li>
+            <li>Supported Kernel and SimpleAccount call decoding</li>
+            <li>Token movements, shown as context</li>
+            <li>Optional hash anchors for policies, intents, and reports</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-tag" style="color: var(--brick)">Not claimed</div>
+          <ul class="list no">
+            <li>Unknown multicalls or opaque inner calls are marked partial coverage</li>
+            <li>Explorer data can be incomplete; gaps are labelled in place</li>
+            <li>Token amounts are informational, not evaluated by policy</li>
+            <li>Not an on-chain control — Mandate cannot block an action</li>
+            <li>Not custody, tracing, or a guarantee of authorship</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="pull" style="margin-top: 30px; font-size: 27px">
+        Trust comes from showing what is missing, not only what passed.
+      </p>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>07</span>
+      </div>
+    </section>
+
+    <!-- 08 why now -->
+    <section class="slide">
+      <div class="kicker">
+        <span>Why now</span>
+        <span>08</span>
+      </div>
+
+      <h2>Agents got execution. Evidence did not keep up.</h2>
+
+      <div class="grid-3" style="margin-top: 28px">
+        <article class="card">
+          <div class="card-tag">Account abstraction is default</div>
+          <h3>ERC-4337 on BOT Chain</h3>
+          <p style="margin-top: 10px">
+            Smart accounts and EntryPoint v0.7 mean an agent's actions arrive as
+            UserOperations, with inner calls the explorer may only partially
+            decode.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-tag">Pilots need review, not demos</div>
+          <h3>Testnet pilots today</h3>
+          <p style="margin-top: 10px">
+            BOT Chain Bohr testnet is where agent pilots run. Teams need a
+            readable authorization trail before they can hand a program real
+            authority.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-tag">Regulators ask for provenance</div>
+          <h3>Proof of approval</h3>
+          <p style="margin-top: 10px">
+            The question an reviewer asks is narrow: what was approved, by whom,
+            against which policy, and what did the chain actually record?
+          </p>
+        </article>
+      </div>
+
+      <div class="grid-2" style="margin-top: 30px; gap: 44px">
+        <div>
+          <div class="split-label">Who it is for</div>
+          <ul class="list">
+            <li>Teams running agent pilots on BOT Chain testnet</li>
+            <li>Security and risk reviewers signing off on agent authority</li>
+            <li>Integrators who must show an approval trail to a customer</li>
+          </ul>
+        </div>
+        <div>
+          <div class="split-label">Where it fits</div>
+          <ul class="list">
+            <li>After approval, before and after execution</li>
+            <li>Alongside explorers — it reads them, it does not replace them</li>
+            <li>Upstream of audits and exports that must survive review</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>08</span>
+      </div>
+    </section>
+
+    <!-- 09 differentiation -->
+    <section class="slide">
+      <div class="kicker">
+        <span>Differentiation</span>
+        <span>09</span>
+      </div>
+
+      <h2>Calm, documentary, and exportable.</h2>
+
+      <p class="lede" style="margin-top: 18px; font-size: 19px">
+        Public research across agent-governance and execution-evidence products
+        points to the same winning pattern: make the decision boundary visible —
+        proposed action → policy → approval → execution → receipt.
+      </p>
+
+      <div class="grid-2" style="margin-top: 26px; gap: 40px">
+        <div>
+          <div class="split-label">What we adopted</div>
+          <ul class="list">
+            <li><strong>Timeline first</strong> — ordered, timestamped events linked to policy and evidence</li>
+            <li><strong>Split verdicts</strong> — intent, policy, chain, and attribution stay separate</li>
+            <li><strong>Provenance on every field</strong> — source and fetched-at, always</li>
+            <li><strong>Progressive disclosure</strong> — plain-language summary, hashes one panel away</li>
+          </ul>
+        </div>
+        <div>
+          <div class="split-label">What we refused</div>
+          <ul class="list no">
+            <li>Wallet, key, and signing metaphors as the centre of the product</li>
+            <li>Dark terminal chrome and generic violet-gradient SaaS styling</li>
+            <li>Status language that conflates submitted with succeeded</li>
+            <li>Turning missing coverage into an implied pass</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 26px; background: transparent; border-style: dashed">
+        <p style="font-size: 16px">
+          Visual direction: warm paper and editorial type, like an audit
+          workpaper. Indigo marks authority, evergreen marks confirmed evidence,
+          ochre marks review. The core object is a versioned mandate plus a
+          comparison — never a transaction builder.
+        </p>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>09</span>
+      </div>
+    </section>
+
+    <!-- 10 onchain -->
+    <section class="slide slide-dark">
+      <div class="kicker">
+        <span>On-chain proof</span>
+        <span>10</span>
+      </div>
+
+      <h2>Anchors you can verify yourself.</h2>
+
+      <div class="grid-2" style="margin-top: 26px; gap: 44px; align-items: start">
+        <div class="chain-card">
+          <dl>
+            <dt>Registry</dt>
+            <dd>0xe923e156570961283198faad9e59744b49d1e523</dd>
+            <dt>Deploy tx</dt>
+            <dd>0x1509a5fd4ca468a00151e8a5d6f0540daa740fcd72468b7b42eef3b24fef0756</dd>
+            <dt>Block</dt>
+            <dd>27678056</dd>
+            <dt>Chain</dt>
+            <dd>BOT Chain Bohr testnet · 968</dd>
+            <dt>Explorer</dt>
+            <dd>scan.bohr.life/address/0xe923…e523</dd>
+            <dt>Compiler</dt>
+            <dd>solc 0.8.37 · runtime 1830 bytes</dd>
+          </dl>
+        </div>
+
+        <div>
+          <p class="lede" style="font-size: 18.5px; color: #dfe6e1">
+            The registry stores a content hash, a kind, a recorder address, and a
+            block timestamp. Policy, intent, report, and evidence hashes are
+            written by a local burner key and read back by the app.
+          </p>
+
+          <div class="rule" style="background: rgba(242, 239, 230, 0.2)"></div>
+
+          <ul class="list" style="gap: 12px">
+            <li style="color: #dfe6e1">No owner, custody, enforcement, upgrade path, or deletion</li>
+            <li style="color: #dfe6e1">First recorder of a hash wins; the app only ever reads</li>
+            <li style="color: #dfe6e1">This deck's own SHA-256 is anchored as a report on chain</li>
+          </ul>
+
+          <p class="note" style="margin-top: 24px">
+            An anchor proves a hash was recorded by an address at a time. It does
+            not prove authorship, correctness, or that the record is current —
+            and Mandate says so in the product.
+          </p>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>10</span>
+      </div>
+    </section>
+
+    <!-- 11 status + roadmap -->
+    <section class="slide">
+      <div class="kicker">
+        <span>Status and roadmap</span>
+        <span>11</span>
+      </div>
+
+      <h2>Built, tested, and deployable today.</h2>
+
+      <div class="roadmap" style="margin-top: 26px">
+        <div class="phase">
+          <span class="phase-tag">Shipped</span>
+          <h3>The working ledger</h3>
+          <ul>
+            <li>Agents, versioned policies, approved intents, evidence</li>
+            <li>Six-verdict review model with coverage notes</li>
+            <li>Activity discovery through BOT Scan</li>
+            <li>JSON and Markdown report exports with fingerprints</li>
+            <li>Anchor registry deployed and read by the app</li>
+            <li>19 passing unit tests plus an opt-in live testnet test</li>
+            <li>Vercel-ready Next.js build; SQLite storage</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <span class="phase-tag">Next</span>
+          <h3>Multi-operator review</h3>
+          <ul>
+            <li>Authentication and database access controls</li>
+            <li>Reviewer roles, sign-off, and audit history</li>
+            <li>Scheduled evidence sweeps instead of manual attachment</li>
+            <li>Deeper inner-call decoding and coverage reporting</li>
+            <li>Webhooks and CI checks on report fingerprints</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <span class="phase-tag">Later</span>
+          <h3>Beyond one chain</h3>
+          <ul>
+            <li>Chain adapters past BOT Chain testnet, each with explicit coverage</li>
+            <li>Policy templates for common agent mandates</li>
+            <li>Org-level anchor directories and retention policy</li>
+            <li>Independent verification of report fingerprints</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rule" style="margin: 22px 0 16px"></div>
+
+      <p class="note" style="max-width: 1040px">
+        Testnet only — chain ID 968 is enforced, limits are documented in the
+        README, the UI, and every export, and one command runs typecheck, tests,
+        lint, and contract compilation.
+      </p>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>11</span>
+      </div>
+    </section>
+
+    <!-- 12 close -->
+    <section class="slide slide-dark">
+      <div class="kicker">
+        <span>The ask</span>
+        <span>12</span>
+      </div>
+
+      <p class="close-quote">
+        Give reviewers the record they can actually defend: what was approved,
+        what happened, and what is still missing.
+      </p>
+
+      <div class="grid-3" style="margin-top: 40px">
+        <div>
+          <div class="split-label" style="color: #9fc4b1">Pilot with us</div>
+          <p style="color: #dfe6e1; font-size: 15.5px; line-height: 1.55">
+            Run Mandate against a BOT Chain testnet smart account and review your
+            first week of agent activity.
+          </p>
+        </div>
+        <div>
+          <div class="split-label" style="color: #9fc4b1">Integrate</div>
+          <p style="color: #dfe6e1; font-size: 15.5px; line-height: 1.55">
+            Report exports and anchor reads are API-first, ready to sit inside an
+            existing approval or audit workflow.
+          </p>
+        </div>
+        <div>
+          <div class="split-label" style="color: #9fc4b1">Challenge the boundaries</div>
+          <p style="color: #dfe6e1; font-size: 15.5px; line-height: 1.55">
+            The coverage section is a first-class surface. Tell us what should be
+            checked next — and what must never be claimed.
+          </p>
+        </div>
+      </div>
+
+      <div class="close-links">
+        <span>github.com/zynorr/Mandate</span>
+        <span>scan.bohr.life · chain 968</span>
+        <span>docs/pitch/mandate-pitch-deck.pdf</span>
+      </div>
+
+      <div class="foot">
+        <span>Mandate · evidence ledger for agent actions</span>
+        <span>12</span>
+      </div>
+    </section>
+  </body>
+</html>

@@ -91,7 +91,11 @@ npm run contracts:anchor -- --kind intent --hash 0x...
 npm run contracts:anchor -- --kind report --hash 0x...
 ```
 
-The sample workspace policy hash and all three sample intent fingerprints are anchored. Open `http://localhost:3000/app/anchors` to verify them. Run anchor commands one at a time; each invocation reads the next nonce from the RPC.
+The sample workspace policy hash and all three sample intent fingerprints are anchored. Open `http://localhost:3000/app/anchors` to verify them. The pitch deck PDF is also anchored as a report; its hash and transaction are recorded in `docs/pitch/README.md`. Run anchor commands one at a time; each invocation reads the next nonce from the RPC.
+
+## Pitch deck
+
+`docs/pitch/mandate-pitch-deck.pdf` is a twelve-slide product pitch. The editable source is `docs/pitch/deck.html`; `docs/pitch/README.md` covers regeneration and the deck's on-chain anchor record.
 
 ## Architecture
 
