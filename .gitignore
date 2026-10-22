@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+contracts/artifacts/
+*.tsbuildinfo
+.env*
+!.env.example
+data/*.db
+data/*.db-*
+data/*.sqlite
+data/*.sqlite-*
+*.log
+.DS_Store
+Thumbs.db
