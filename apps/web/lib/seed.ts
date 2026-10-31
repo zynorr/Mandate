@@ -11,9 +11,15 @@ import {
   policyRecordSchema,
   type EvidenceRecord,
   type IntentRecord,
+  type KnownChainId,
   type ObservedAction,
   type PolicyRecord,
 } from "@mandate/chain";
+
+export interface DemoSeedContext {
+  chainId: KnownChainId;
+  explorerUrl: string;
+}
 
 const AGENT_ID = "a0000000-0000-4000-8000-000000000001";
 const POLICY_ID = "a0000000-0000-4000-8000-000000000002";
@@ -32,6 +38,7 @@ const sampleHash = (suffix: string) =>
 const observedTime = "2026-10-20T09:30:00.000Z";
 
 function baseObserved(
+  context: DemoSeedContext,
   overrides: Partial<ObservedAction> & {
     kind: ObservedAction["kind"];
     hash: string;
@@ -40,7 +47,7 @@ function baseObserved(
   const { hash, ...rest } = overrides;
   const explorerKind = rest.kind === "user_operation" ? "op" : "tx";
   return {
-    chainId: 968,
+    chainId: context.chainId,
     sender: SMART_ACCOUNT,
     target: APPROVED_TARGET,
     targetSource: "decoded_inner",
@@ -63,13 +70,16 @@ function baseObserved(
       "Token movements are informational. This policy evaluates target, method, and native value only.",
     ],
     tokenMovements: [],
-    explorerUrl: `https://scan.bohr.life/${explorerKind}/${hash}`,
+    explorerUrl: `${context.explorerUrl.replace(/\/$/, "")}/${explorerKind}/${hash}`,
     decodedBy: "mandate",
     ...rest,
   };
 }
 
-export function seedDemoWorkspace(db: Database.Database): void {
+export function seedDemoWorkspace(
+  db: Database.Database,
+  context: DemoSeedContext,
+): void {
   const alreadySeeded = db
     .prepare("SELECT value FROM meta WHERE key = 'demo_seed_v1'")
     .get() as { value: string } | undefined;
@@ -89,7 +99,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
 
   const draft = policyDraftSchema.parse({
     name: "Vendor settlement pilot",
-    chainId: 968,
+    chainId: context.chainId,
     allowedTargets: [APPROVED_TARGET],
     allowedMethods: [TRANSFER_SELECTOR],
     maxNativeValuePerActionWei: "10000000000000000",
@@ -118,7 +128,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
       policyId: policy.id,
       policyVersion: policy.version,
       policyHash: policy.hash,
-      chainId: 968 as const,
+      chainId: context.chainId,
       title: input.title,
       rationale: input.rationale,
       target: APPROVED_TARGET,
@@ -203,7 +213,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
     suffix: "a",
     intentId: vendorIntent.id,
     attachedAt: "2026-10-19T14:04:00.000Z",
-    observed: baseObserved({
+    observed: baseObserved(context, {
       kind: "user_operation",
       hash: matchedHash,
       tokenMovements: [
@@ -227,7 +237,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
     suffix: "c",
     intentId: returnIntent.id,
     attachedAt: "2026-10-19T16:12:00.000Z",
-    observed: baseObserved({
+    observed: baseObserved(context, {
       kind: "user_operation",
       hash: sampleHash("c"),
       target: OTHER_TARGET,
@@ -243,7 +253,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
     suffix: "d",
     intentId: invoiceIntent.id,
     attachedAt: "2026-10-20T08:20:00.000Z",
-    observed: baseObserved({
+    observed: baseObserved(context, {
       kind: "user_operation",
       hash: sampleHash("d"),
       chainStatus: "failed",
@@ -256,7 +266,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
     suffix: "e",
     intentId: null,
     attachedAt: "2026-10-20T09:40:00.000Z",
-    observed: baseObserved({
+    observed: baseObserved(context, {
       kind: "transaction",
       hash: sampleHash("e"),
       outerTransactionHash: sampleHash("e"),
@@ -279,7 +289,7 @@ export function seedDemoWorkspace(db: Database.Database): void {
     suffix: "f",
     intentId: invoiceIntent.id,
     attachedAt: "2026-10-20T09:55:00.000Z",
-    observed: baseObserved({
+    observed: baseObserved(context, {
       kind: "user_operation",
       hash: sampleHash("f"),
       target: null,

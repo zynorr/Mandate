@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { OFFICIAL_LINKS } from "@mandate/chain";
+import { OFFICIAL_LINKS, networkLabel, networkName } from "@mandate/chain";
+import { getAppConfig } from "@/lib/config";
 import { ArrowRightIcon } from "./icons";
 
 export function MandateMark({ className = "" }: { className?: string }) {
@@ -81,11 +82,14 @@ function FooterLink({
 }
 
 export function SiteFooter({ compact = false }: { compact?: boolean }) {
+  const config = getAppConfig();
   return (
     <footer className={`site-footer ${compact ? "site-footer-compact" : ""}`}>
       <div className="footer-top">
         <div className="footer-statement">
-          <p className="eyebrow eyebrow-light">BOT Chain testnet</p>
+          <p className="eyebrow eyebrow-light">
+            {networkLabel(config.chainId)}
+          </p>
           <p className="footer-headline">
             A readable record of what was approved and what happened.
           </p>
@@ -104,8 +108,9 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         <div className="footer-brand">
           <Wordmark compact />
           <p>
-            An agent authorization and evidence ledger for BOT Chain testnet.
-            No custody, signing, or transaction submission.
+            An agent authorization and evidence ledger for{" "}
+            {networkLabel(config.chainId)}. No custody, signing, or transaction
+            submission.
           </p>
         </div>
         <div className="footer-column">
@@ -129,7 +134,9 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         </div>
         <div className="footer-column footer-meta">
           <h2>Workspace</h2>
-          <p>BOT Chain testnet · chain ID 968</p>
+          <p>
+            {networkName(config.chainId)} · chain ID {config.chainId}
+          </p>
           <p>ERC-4337 v0.7</p>
           <p>Data stays on this machine</p>
         </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BOT_TESTNET_CHAIN_ID } from "@mandate/chain";
+import { BOT_MAINNET_CHAIN_ID } from "@mandate/chain";
+import { getAppConfig } from "@/lib/config";
 import { AppNav } from "./app-nav";
 import { SiteFooter, Wordmark } from "./brand";
 
@@ -18,6 +19,9 @@ export function AppShell({
   agents: Array<{ id: string; name: string; isDemo: boolean }>;
   children: ReactNode;
 }) {
+  const config = getAppConfig();
+  const shortNetwork =
+    config.chainId === BOT_MAINNET_CHAIN_ID ? "BOT mainnet" : "BOT testnet";
   return (
     <div className="app-frame">
       <aside className="app-sidebar">
@@ -27,7 +31,7 @@ export function AppShell({
           </Link>
           <div className="environment-pill">
             <span className="environment-dot" aria-hidden="true" />
-            BOT testnet · {BOT_TESTNET_CHAIN_ID}
+            {shortNetwork} · {config.chainId}
           </div>
         </div>
         <AppNav agents={shellAgents(agents)} />
@@ -47,7 +51,7 @@ export function AppShell({
           </Link>
           <span className="environment-pill">
             <span className="environment-dot" aria-hidden="true" />
-            968
+            {config.chainId}
           </span>
         </header>
         <div className="app-mobile-nav">

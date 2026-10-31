@@ -1,4 +1,9 @@
-import { BOT_TESTNET_CHAIN_ID, OFFICIAL_LINKS } from "./constants";
+import {
+  BOT_TESTNET_CHAIN_ID,
+  OFFICIAL_LINKS,
+  networkFor,
+  networkLabel,
+} from "./constants";
 import {
   formatCheckValue,
   formatDateTime,
@@ -15,6 +20,7 @@ import type {
 
 export interface EvidenceReportInput {
   generatedAt?: string;
+  chainId?: number;
   agent: AgentRecord & { isDemo?: boolean };
   policies: PolicyRecord[];
   intents: IntentRecord[];
@@ -50,8 +56,8 @@ export interface EvidenceReport {
   limitations: string[];
 }
 
-const limitations = [
-  "This report covers BOT Chain testnet (chain ID 968) only.",
+const limitationsFor = (chainId: number): string[] => [
+  `This report covers ${networkLabel(chainId)} (chain ID ${chainId}) only.`,
   "Mandate does not hold keys, sign, submit, or sponsor transactions.",
   "A matched record means the available observed fields match the approved intent and policy. It does not guarantee that every part of the transaction was decoded.",
   "Token movements are informational and are not evaluated by policy.",
@@ -85,13 +91,19 @@ export function buildEvidenceReport(
   input: EvidenceReportInput,
 ): EvidenceReport {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
+  const chainId =
+    input.chainId ??
+    input.policies[0]?.chainId ??
+    input.evidence[0]?.observed.chainId ??
+    BOT_TESTNET_CHAIN_ID;
+  const network = networkFor(chainId);
   const payload = {
     schemaVersion: "mandate.evidence.v1" as const,
     generatedAt,
     network: {
-      name: "BOT Chain Bohr Testnet",
-      chainId: BOT_TESTNET_CHAIN_ID,
-      explorer: "https://scan.bohr.life",
+      name: network?.name ?? `Chain ${chainId}`,
+      chainId,
+      explorer: network?.explorerUrl ?? OFFICIAL_LINKS.explorer,
     },
     agent: {
       id: input.agent.id,
@@ -114,7 +126,7 @@ export function buildEvidenceReport(
     policies: input.policies,
     intents: input.intents,
     evidence: input.evidence,
-    limitations,
+    limitations: limitationsFor(chainId),
   };
   return {
     ...payload,

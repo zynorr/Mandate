@@ -3,6 +3,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPublicClient, createWalletClient, formatEther, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import {
+  requireMainnetConfirmation,
+  resolveDeploymentTarget,
+} from "./networks.mjs";
 
 const contractsDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(contractsDir, "..");
@@ -12,7 +16,6 @@ const artifactPath = path.join(
   "artifacts",
   "MandateAnchorRegistry.json",
 );
-const deploymentPath = path.join(contractsDir, "deployments", "968.json");
 
 const readEnvFile = (filePath) => {
   if (!fs.existsSync(filePath)) return {};
@@ -26,8 +29,16 @@ const readEnvFile = (filePath) => {
 
 const fileEnv = readEnvFile(envPath);
 const privateKey = process.env.DEPLOYER_PRIVATE_KEY ?? fileEnv.DEPLOYER_PRIVATE_KEY;
-const rpcUrl =
-  process.env.BOT_RPC_URL ?? fileEnv.BOT_RPC_URL ?? "https://rpc.bohr.life";
+const { network, rpcUrl } = resolveDeploymentTarget({
+  BOT_CHAIN_ID: process.env.BOT_CHAIN_ID ?? fileEnv.BOT_CHAIN_ID,
+  BOT_RPC_URL: process.env.BOT_RPC_URL ?? fileEnv.BOT_RPC_URL,
+});
+requireMainnetConfirmation(network, process.env);
+const deploymentPath = path.join(
+  contractsDir,
+  "deployments",
+  `${network.chainId}.json`,
+);
 
 if (!privateKey?.match(/^0x[0-9a-fA-F]{64}$/)) {
   throw new Error("DEPLOYER_PRIVATE_KEY is missing or malformed");
@@ -38,12 +49,12 @@ if (!fs.existsSync(artifactPath)) {
 
 const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
 const chain = {
-  id: 968,
-  name: "BOT Chain Bohr Testnet",
-  nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+  id: network.chainId,
+  name: network.name,
+  nativeCurrency: network.nativeCurrency,
   rpcUrls: { default: { http: [rpcUrl] } },
   blockExplorers: {
-    default: { name: "BOT Scan", url: "https://scan.bohr.life" },
+    default: { name: network.explorerName, url: network.explorerUrl },
   },
 };
 const account = privateKeyToAccount(privateKey);
@@ -55,8 +66,10 @@ const walletClient = createWalletClient({
 });
 
 const chainId = await publicClient.getChainId();
-if (chainId !== 968) {
-  throw new Error(`Refusing deployment on chain ${chainId}; expected 968`);
+if (chainId !== network.chainId) {
+  throw new Error(
+    `Refusing deployment on chain ${chainId}; expected ${network.name} (${network.chainId}). Set BOT_CHAIN_ID to deploy on a different network.`,
+  );
 }
 
 if (fs.existsSync(deploymentPath)) {
@@ -82,7 +95,9 @@ if (fs.existsSync(deploymentPath)) {
 
 const balance = await publicClient.getBalance({ address: account.address });
 if (balance === 0n) {
-  throw new Error(`Deployer ${account.address} has no testnet BOT`);
+  throw new Error(
+    `Deployer ${account.address} has no BOT for gas on ${network.name}`,
+  );
 }
 
 const hash = await walletClient.deployContract({
@@ -102,6 +117,7 @@ if (!code || code === "0x") {
 
 const deployment = {
   contractName: artifact.contractName,
+  network: network.name,
   chainId,
   address: receipt.contractAddress,
   transactionHash: receipt.transactionHash,

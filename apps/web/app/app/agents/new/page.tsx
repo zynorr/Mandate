@@ -1,14 +1,17 @@
 import Link from "next/link";
+import { networkName } from "@mandate/chain";
 import { ArrowRightIcon } from "@/components/icons";
 import { AgentForm } from "@/components/forms";
 import { PageHeader } from "@/components/ui";
 import { createAgentAction } from "@/lib/actions";
+import { getAppConfig } from "@/lib/config";
 
 export const metadata = {
   title: "Register agent",
 };
 
 export default function NewAgentPage() {
+  const config = getAppConfig();
   return (
     <>
       <PageHeader
@@ -36,7 +39,10 @@ export default function NewAgentPage() {
               <div className="detail-list">
                 <div className="detail-row">
                   <dt>Network</dt>
-                  <dd>BOT Chain Bohr testnet only · chain ID 968</dd>
+                  <dd>
+                    {networkName(config.chainId)} only · chain ID{" "}
+                    {config.chainId}
+                  </dd>
                 </div>
                 <div className="detail-row">
                   <dt>Identity</dt>

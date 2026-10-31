@@ -7,11 +7,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Mandate — Agent authorization evidence for BOT Chain testnet",
+    default: "Mandate — Agent authorization evidence for BOT Chain",
     template: "%s · Mandate",
   },
   description:
-    "Mandate compares approved agent intents with BOT Chain testnet evidence, then keeps the result in a reviewable ledger.",
+    "Mandate compares approved agent intents with BOT Chain evidence, then keeps the result in a reviewable ledger.",
   applicationName: "Mandate",
   keywords: [
     "BOT Chain",

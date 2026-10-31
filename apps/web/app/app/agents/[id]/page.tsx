@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import {
   formatDateTime,
   formatNativeValue,
+  networkLabel,
   shortenAddress,
   shortenHash,
 } from "@mandate/chain";
+import { getAppConfig } from "@/lib/config";
 import { CopyButton } from "@/components/copy-button";
 import { EvidenceTable } from "@/components/evidence-table";
 import {
@@ -41,6 +43,8 @@ export default async function AgentPage({
 }) {
   const { id } = await params;
   const { intent: intentStatus } = await searchParams;
+  const config = getAppConfig();
+  const network = networkLabel(config.chainId);
   const agent = getAgent(id);
   if (!agent) notFound();
 
@@ -57,7 +61,7 @@ export default async function AgentPage({
         title={agent.name}
         description={
           agent.description ||
-          "A BOT Chain testnet smart account under evidence review."
+          `A ${network} smart account under evidence review.`
         }
         actions={
           <>
@@ -104,7 +108,7 @@ export default async function AgentPage({
               <CopyButton value={agent.smartAccount} label="Copy smart account" />
             </div>
             <div className="kv-inline kv-spaced">
-              <span>Chain 968</span>
+              <span>Chain {config.chainId}</span>
               <span>Registered {formatDateTime(agent.createdAt)}</span>
               <span>
                 {agent.policyCount}{" "}
@@ -257,7 +261,7 @@ export default async function AgentPage({
             <SectionHeading
               eyebrow="Evidence"
               title="Observed actions"
-              description="Public BOT Chain testnet records attached to this agent."
+              description={`Public ${network} records attached to this agent.`}
               action={
                 <Link
                   href={`/app/evidence?agent=${agent.id}`}

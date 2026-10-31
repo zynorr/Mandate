@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Mandate — Agent authorization evidence",
     short_name: "Mandate",
     description:
-      "Review approved agent intents against BOT Chain testnet evidence.",
+      "Review approved agent intents against BOT Chain evidence.",
     start_url: "/app",
     display: "standalone",
     background_color: "#f7f3eb",

@@ -24,7 +24,7 @@ export default async function SourcesPage() {
       <PageHeader
         eyebrow="Network status"
         title="Source health"
-        description="Live checks for BOT Chain testnet RPC, Bundler, BOT Scan, and the account-abstraction index. A failed check can reduce coverage or block attachment."
+        description={`Live checks for ${config.networkName} RPC, Bundler, BOT Scan, and the account-abstraction index. A failed check can reduce coverage or block attachment.`}
         actions={
           <Link href="/app/sources?check=1" className="button button-ghost">
             Check again
@@ -65,7 +65,9 @@ export default async function SourcesPage() {
           <div className="card-head">
             <div>
               <h2>Configured endpoints</h2>
-              <p>BOT Chain Bohr testnet · chain ID {config.chainId}</p>
+              <p>
+                {config.networkName} · chain ID {config.chainId}
+              </p>
             </div>
           </div>
           <div className="card-body">
@@ -123,9 +125,9 @@ export default async function SourcesPage() {
       </div>
 
       <div className="note note-spaced">
-        <strong>Endpoint scope.</strong> These are BOT Chain testnet endpoints.
-        The footer&apos;s BOT Chain Explorer link points to mainnet; evidence
-        links use the testnet explorer.
+        <strong>Endpoint scope.</strong> These are {config.networkName}{" "}
+        endpoints. Evidence links use the configured explorer (
+        {config.explorerUrl}).
       </div>
     </>
   );

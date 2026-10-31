@@ -1,4 +1,25 @@
+export const BOT_MAINNET_CHAIN_ID = 677 as const;
 export const BOT_TESTNET_CHAIN_ID = 968 as const;
+
+export interface BotNetwork {
+  chainId: number;
+  name: string;
+  rpcUrl: string;
+  bundlerUrl: string;
+  explorerUrl: string;
+  explorerApiUrl: string;
+  entryPointAddress: `0x${string}`;
+}
+
+export const BOT_MAINNET = {
+  chainId: BOT_MAINNET_CHAIN_ID,
+  name: "BOT Chain Mainnet",
+  rpcUrl: "https://rpc.botchain.ai",
+  bundlerUrl: "https://bundler.botchain.ai/rpc/",
+  explorerUrl: "https://scan.botchain.ai",
+  explorerApiUrl: "https://scan.botchain.ai/api/v2",
+  entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+} as const satisfies BotNetwork;
 
 export const BOT_TESTNET = {
   chainId: BOT_TESTNET_CHAIN_ID,
@@ -8,7 +29,42 @@ export const BOT_TESTNET = {
   explorerUrl: "https://scan.bohr.life",
   explorerApiUrl: "https://scan.bohr.life/api/v2",
   entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
-} as const;
+} as const satisfies BotNetwork;
+
+export const BOT_NETWORKS: Record<number, BotNetwork> = {
+  [BOT_MAINNET_CHAIN_ID]: BOT_MAINNET,
+  [BOT_TESTNET_CHAIN_ID]: BOT_TESTNET,
+};
+
+export const KNOWN_CHAIN_IDS = [
+  BOT_MAINNET_CHAIN_ID,
+  BOT_TESTNET_CHAIN_ID,
+] as const;
+
+export type KnownChainId = (typeof KNOWN_CHAIN_IDS)[number];
+
+export function isKnownChainId(chainId: number): chainId is KnownChainId {
+  return KNOWN_CHAIN_IDS.includes(chainId as KnownChainId);
+}
+
+export function networkFor(chainId: number): BotNetwork | null {
+  return isKnownChainId(chainId) ? BOT_NETWORKS[chainId] ?? null : null;
+}
+
+export function networkName(chainId: number): string {
+  return networkFor(chainId)?.name ?? `Chain ${chainId}`;
+}
+
+export function networkLabel(chainId: number): string {
+  switch (chainId) {
+    case BOT_MAINNET_CHAIN_ID:
+      return "BOT Chain mainnet";
+    case BOT_TESTNET_CHAIN_ID:
+      return "BOT Chain testnet";
+    default:
+      return `Chain ${chainId}`;
+  }
+}
 
 export const OFFICIAL_LINKS = {
   botChain: "https://www.botchain.ai/en/",

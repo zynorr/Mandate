@@ -1,0 +1,14 @@
+{
+  "contractName": "MandateAnchorRegistry",
+  "network": "BOT Chain Mainnet",
+  "chainId": 677,
+  "address": "0xc69367d69b12bc14397773d11ad462f2f1d7aeb4",
+  "transactionHash": "0x6fba151a852905a2bb0be946db5bdab3915d5396165f01e47260a44fb624787f",
+  "blockNumber": "28655203",
+  "deployer": "0x2a9900a66C13361eb5495ef7dE6D2456Fe0B1B3c",
+  "deployerBalanceBOT": "0.045574261797684749",
+  "deployedAt": "2026-10-31T19:43:55.872Z",
+  "compiler": "0.8.37+commit.f401782d.Emscripten.clang",
+  "sourceHash": "0x02364e509141eeda61fdec565ba23f94d09d41eb39fb24f56f705a7f9920e404",
+  "runtimeBytes": 1830
+}

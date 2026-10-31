@@ -1,6 +1,11 @@
 import { getAddress, isAddress } from "viem";
 import { z } from "zod";
-import { BOT_TESTNET_CHAIN_ID } from "./constants";
+import { BOT_MAINNET_CHAIN_ID, BOT_TESTNET_CHAIN_ID } from "./constants";
+
+const chainIdSchema = z.union([
+  z.literal(BOT_MAINNET_CHAIN_ID),
+  z.literal(BOT_TESTNET_CHAIN_ID),
+]);
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -44,7 +49,7 @@ const uniqueBy = <T>(items: T[], key: (item: T) => string) => {
 
 const policyFieldsSchema = z.object({
   name: z.string().trim().min(2, "Give the policy a name.").max(80),
-  chainId: z.literal(BOT_TESTNET_CHAIN_ID),
+  chainId: chainIdSchema,
   allowedTargets: z
     .array(addressSchema)
     .min(1, "Allow at least one target.")
@@ -121,7 +126,7 @@ export const intentRecordSchema = intentDraftSchema.and(
     policyId: z.string().uuid(),
     policyVersion: z.number().int().positive(),
     policyHash: hashSchema,
-    chainId: z.literal(BOT_TESTNET_CHAIN_ID),
+    chainId: chainIdSchema,
     fingerprint: hashSchema,
     createdAt: isoDateTimeSchema,
   }),
@@ -142,7 +147,7 @@ export const tokenMovementSchema = z.object({
 });
 
 export const observedActionSchema = z.object({
-  chainId: z.literal(BOT_TESTNET_CHAIN_ID),
+  chainId: chainIdSchema,
   kind: evidenceKindSchema,
   sender: addressSchema,
   target: addressSchema.nullable(),

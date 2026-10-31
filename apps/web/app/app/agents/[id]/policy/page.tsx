@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import {
   formatDateTime,
   formatNativeValue,
+  networkLabel,
   shortenHash,
 } from "@mandate/chain";
 import { CopyButton } from "@/components/copy-button";
 import { PolicyForm } from "@/components/forms";
+import { getAppConfig } from "@/lib/config";
 import { PlusIcon } from "@/components/icons";
 import {
   Note,
@@ -31,6 +33,7 @@ export default async function PolicyPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const network = networkLabel(getAppConfig().chainId);
   const agent = getAgent(id);
   if (!agent) notFound();
 
@@ -262,7 +265,7 @@ export default async function PolicyPage({
       {agent.isDemo ? (
         <Note tone="warning">
           This sample policy and its targets are illustrative. Use addresses from
-          your own BOT Chain testnet workflow for live evidence.
+          your own {network} workflow for live evidence.
         </Note>
       ) : null}
     </>

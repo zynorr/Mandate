@@ -1,9 +1,12 @@
 import { getAddress, isAddress, type Address } from "viem";
 import { BundlerClient, type BundlerReceipt } from "./bundler";
 import {
-  BOT_TESTNET_CHAIN_ID,
+  KNOWN_CHAIN_IDS,
   KNOWN_METHODS,
   NATIVE_TRANSFER_SELECTOR,
+  isKnownChainId,
+  networkLabel,
+  type KnownChainId,
 } from "./constants";
 import { decodeAccountCalldata, decodeDirectTransaction } from "./decode";
 import {
@@ -21,7 +24,7 @@ import type {
 } from "./schemas";
 
 export interface ChainConfig {
-  chainId: number;
+  chainId: KnownChainId;
   rpcUrl: string;
   bundlerUrl: string;
   explorerUrl: string;
@@ -89,13 +92,13 @@ function chainError(error: unknown): string {
   return "The source could not be read.";
 }
 
-async function verifyTestnet(
+async function verifyNetwork(
   config: ChainConfig,
   rpc: RpcClient,
 ): Promise<void> {
-  if (config.chainId !== BOT_TESTNET_CHAIN_ID) {
+  if (!isKnownChainId(config.chainId)) {
     throw new Error(
-      `This build only supports BOT Chain testnet (${BOT_TESTNET_CHAIN_ID}).`,
+      `This build supports BOT Chain mainnet (${KNOWN_CHAIN_IDS[0]}) and testnet (${KNOWN_CHAIN_IDS[1]}) only.`,
     );
   }
   let actualChainId: number;
@@ -106,9 +109,9 @@ async function verifyTestnet(
       `Could not verify the RPC chain. ${chainError(error)}`,
     );
   }
-  if (actualChainId !== BOT_TESTNET_CHAIN_ID) {
+  if (actualChainId !== config.chainId) {
     throw new Error(
-      `The RPC is on chain ${actualChainId}; this build requires BOT Chain testnet ${BOT_TESTNET_CHAIN_ID}.`,
+      `The RPC is on chain ${actualChainId}; this workspace is configured for ${networkLabel(config.chainId)} (${config.chainId}).`,
     );
   }
 }
@@ -186,7 +189,7 @@ async function fetchUserOperationEvidence(
     throw new Error(
       hadTransportError
         ? "BOT Chain sources could not return this UserOperation. Check the hash and try again."
-        : "UserOperation not found on BOT Chain testnet. Check the 32-byte hash and try again.",
+        : `UserOperation not found on ${networkLabel(config.chainId)}. Check the 32-byte hash and try again.`,
     );
   }
 
@@ -346,7 +349,7 @@ async function fetchUserOperationEvidence(
   }
 
   const observed: ObservedAction = {
-    chainId: BOT_TESTNET_CHAIN_ID,
+    chainId: config.chainId,
     kind: "user_operation",
     sender: normalizedSender,
     target,
@@ -416,7 +419,7 @@ async function fetchTransactionEvidence(
       );
     }
     throw new Error(
-      "Transaction not found on BOT Chain testnet. Check the 32-byte hash and try again.",
+      `Transaction not found on ${networkLabel(config.chainId)}. Check the 32-byte hash and try again.`,
     );
   }
 
@@ -501,7 +504,7 @@ async function fetchTransactionEvidence(
   }
 
   const observed: ObservedAction = {
-    chainId: BOT_TESTNET_CHAIN_ID,
+    chainId: config.chainId,
     kind: "transaction",
     sender: normalizedSender,
     target,
@@ -539,7 +542,7 @@ export async function fetchEvidence(
 ): Promise<FetchedEvidence> {
   const config = input.config;
   const rpc = new RpcClient(config.rpcUrl);
-  await verifyTestnet(config, rpc);
+  await verifyNetwork(config, rpc);
   const explorer = new ExplorerClient(config.explorerApiUrl);
   const bundler = new BundlerClient(config.bundlerUrl);
 

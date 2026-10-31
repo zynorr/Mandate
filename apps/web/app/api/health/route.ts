@@ -1,3 +1,4 @@
+import { getAppConfig } from "@/lib/config";
 import { readSourceHealth } from "@/lib/source-health";
 
 export const runtime = "nodejs";
@@ -5,12 +6,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const config = getAppConfig();
     const health = await readSourceHealth();
     return Response.json(
       {
         service: "mandate",
-        network: "BOT Chain Bohr testnet",
-        chainId: 968,
+        network: config.networkName,
+        chainId: config.chainId,
         ...health,
       },
       {

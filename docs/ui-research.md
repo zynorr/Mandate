@@ -64,9 +64,13 @@ Mandate borrows the trust cues of a signed paper ledger and the clarity of an au
 
 ## Constraints carried into implementation
 
-- BOT Chain testnet only; chain ID is validated against 968.
+- BOT Chain mainnet and testnet; the chain ID is validated against the supported set (677 and 968).
 - Explorer, RPC, bundler, EntryPoint, and database locations are environment-configurable.
 - No keys, signing, custody, or transaction submission.
 - No claim of success until an on-chain receipt confirms it.
 - Sample/demo records are labelled at row level and in exports.
-- The required BOT Chain footer links are present in every public and app footer, including the mainnet explorer link requested in the brief; the product's in-context evidence links point to the configured testnet explorer.
+- The required BOT Chain footer links are present in every public and app footer, including the mainnet explorer link requested in the brief; the product's in-context evidence links point to the configured explorer.
+
+## Update: 31 October 2026
+
+Mainnet support was added after the original research. Chain ID 677 (BOT Chain mainnet) is now supported alongside testnet 968, selected by `BOT_CHAIN_ID`; both networks use the same EntryPoint v0.7 address. The original testnet-only statement above is retained as the research record. The mainnet anchor registry is deployed at `0xc69367d69b12bc14397773d11ad462f2f1d7aeb4`.

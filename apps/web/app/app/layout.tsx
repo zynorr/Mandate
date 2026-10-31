@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Workspace",
   description:
-    "Review BOT Chain testnet agent intents, evidence, and policy coverage.",
+    "Review BOT Chain agent intents, evidence, and policy coverage.",
 };
 
 export default function WorkspaceLayout({

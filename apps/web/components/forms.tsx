@@ -209,8 +209,8 @@ export function AgentForm({ action }: { action: FormAction }) {
       <div className="form-card-head">
         <h2>Register a smart account</h2>
         <p>
-          Use the ERC-4337 smart account that will act on BOT Chain testnet.
-          Mandate uses this address to match public evidence.
+          Use the ERC-4337 smart account that will act on BOT Chain. Mandate
+          uses this address to match public evidence.
         </p>
       </div>
       <div className="form-body">
@@ -230,7 +230,7 @@ export function AgentForm({ action }: { action: FormAction }) {
             label="Smart account address"
             state={state}
             placeholder="0x…"
-            hint="The account that sends UserOperations or transactions. It must be on BOT Chain testnet."
+            hint="The account that sends UserOperations or transactions. It must be on the configured BOT Chain network."
             required
             full={false}
             mono
@@ -560,8 +560,8 @@ export function AttachEvidenceForm({
         </div>
         <div className="form-actions">
           <p className="form-actions-note">
-            Read-only fetch from BOT Chain testnet and BOT Scan. No signing,
-            custody, or transaction submission.
+            Read-only fetch from the configured BOT Chain network and BOT Scan.
+            No signing, custody, or transaction submission.
           </p>
           <SubmitButton>Fetch and attach</SubmitButton>
         </div>

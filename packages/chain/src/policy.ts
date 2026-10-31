@@ -1,4 +1,4 @@
-import { BOT_TESTNET_CHAIN_ID, NATIVE_TRANSFER_LABEL } from "./constants";
+import { NATIVE_TRANSFER_LABEL, networkLabel } from "./constants";
 import {
   formatDateTime,
   formatNativeValue,
@@ -159,10 +159,9 @@ function buildPolicyChecks(
   checks.push({
     key: "policy.chain",
     label: "Chain",
-    expected: `BOT Chain testnet · ${BOT_TESTNET_CHAIN_ID}`,
+    expected: `${networkLabel(policy.chainId)} · ${policy.chainId}`,
     observed: `Chain ${observed.chainId}`,
-    state:
-      observed.chainId === BOT_TESTNET_CHAIN_ID ? "pass" : "fail",
+    state: observed.chainId === policy.chainId ? "pass" : "fail",
   });
 
   checks.push({

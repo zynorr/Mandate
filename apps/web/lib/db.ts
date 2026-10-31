@@ -116,7 +116,10 @@ export function getDb(): Database.Database {
   db.pragma("user_version = 1");
 
   if (config.seedDemo) {
-    seedDemoWorkspace(db);
+    seedDemoWorkspace(db, {
+      chainId: config.chainId,
+      explorerUrl: config.explorerUrl,
+    });
   }
 
   globalDb.__mandateDb = db;

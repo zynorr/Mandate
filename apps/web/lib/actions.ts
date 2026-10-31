@@ -13,6 +13,7 @@ import {
   evidenceRecordSchema,
   fetchEvidence,
   intentDraftSchema,
+  networkLabel,
   policyDraftSchema,
 } from "@mandate/chain";
 import { getChainConfig } from "./config";
@@ -154,7 +155,7 @@ export async function createPolicyAction(
 
   const parsed = policyDraftSchema.safeParse({
     name: stringField(formData, "name"),
-    chainId: 968,
+    chainId: getChainConfig().chainId,
     allowedTargets: splitList(stringField(formData, "allowedTargets")),
     allowedMethods: splitList(stringField(formData, "allowedMethods")),
     maxNativeValuePerActionWei: perAction.wei ?? "0",
@@ -289,7 +290,9 @@ export async function attachEvidenceAction(
     return fail(
       error instanceof Error
         ? error.message
-        : "The evidence could not be read from BOT Chain testnet.",
+        : `The evidence could not be read from ${networkLabel(
+            getChainConfig().chainId,
+          )}.`,
     );
   }
 

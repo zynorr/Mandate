@@ -2,22 +2,33 @@ import "server-only";
 
 import path from "node:path";
 import { z } from "zod";
-import { BOT_TESTNET, BOT_TESTNET_CHAIN_ID } from "@mandate/chain";
+import {
+  BOT_TESTNET,
+  BOT_TESTNET_CHAIN_ID,
+  KNOWN_CHAIN_IDS,
+  isKnownChainId,
+  networkFor,
+  networkName,
+  type KnownChainId,
+} from "@mandate/chain";
 
 const booleanString = z
   .enum(["true", "false", "1", "0"])
   .transform((value) => value === "true" || value === "1");
 
+const defaultNetwork =
+  networkFor(Number(process.env.BOT_CHAIN_ID)) ?? BOT_TESTNET;
+
 const envSchema = z.object({
   BOT_CHAIN_ID: z.coerce.number().int().default(BOT_TESTNET_CHAIN_ID),
-  BOT_RPC_URL: z.string().url().default(BOT_TESTNET.rpcUrl),
-  BOT_BUNDLER_URL: z.string().url().default(BOT_TESTNET.bundlerUrl),
-  BOT_EXPLORER_URL: z.string().url().default(BOT_TESTNET.explorerUrl),
-  BOT_EXPLORER_API_URL: z.string().url().default(BOT_TESTNET.explorerApiUrl),
+  BOT_RPC_URL: z.string().url().default(defaultNetwork.rpcUrl),
+  BOT_BUNDLER_URL: z.string().url().default(defaultNetwork.bundlerUrl),
+  BOT_EXPLORER_URL: z.string().url().default(defaultNetwork.explorerUrl),
+  BOT_EXPLORER_API_URL: z.string().url().default(defaultNetwork.explorerApiUrl),
   BOT_ENTRYPOINT_ADDRESS: z
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/)
-    .default(BOT_TESTNET.entryPointAddress),
+    .default(defaultNetwork.entryPointAddress),
   MANDATE_DATABASE_PATH: z.string().trim().min(1).optional(),
   MANDATE_SEED_DEMO: booleanString.default(true),
   MANDATE_ANCHOR_REGISTRY_ADDRESS: z
@@ -57,7 +68,8 @@ function resolveDatabasePath(value: string | undefined): string {
 }
 
 export interface AppConfig {
-  chainId: number;
+  chainId: KnownChainId;
+  networkName: string;
   rpcUrl: string;
   bundlerUrl: string;
   explorerUrl: string;
@@ -80,13 +92,14 @@ export function getAppConfig(): AppConfig {
         .join(", ")}`,
     );
   }
-  if (parsed.data.BOT_CHAIN_ID !== BOT_TESTNET_CHAIN_ID) {
+  if (!isKnownChainId(parsed.data.BOT_CHAIN_ID)) {
     throw new Error(
-      "This build only supports BOT Chain testnet (chain ID 968).",
+      `Unsupported chain ID ${parsed.data.BOT_CHAIN_ID}. This build supports BOT Chain mainnet (${KNOWN_CHAIN_IDS[0]}) and testnet (${KNOWN_CHAIN_IDS[1]}).`,
     );
   }
   cached = {
     chainId: parsed.data.BOT_CHAIN_ID,
+    networkName: networkName(parsed.data.BOT_CHAIN_ID),
     rpcUrl: parsed.data.BOT_RPC_URL,
     bundlerUrl: parsed.data.BOT_BUNDLER_URL,
     explorerUrl: parsed.data.BOT_EXPLORER_URL,

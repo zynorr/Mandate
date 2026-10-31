@@ -17,6 +17,8 @@
     "check": "npm run typecheck && npm run test && npm run lint && npm run contracts:compile",
     "contracts:compile": "node contracts/compile.mjs",
     "contracts:deploy": "npm run contracts:compile && node contracts/deploy.mjs",
+    "contracts:deploy:mainnet": "npm run contracts:compile && node contracts/deploy.mjs",
+    "contracts:test": "node --test contracts/networks.test.mjs",
     "contracts:anchor": "node contracts/anchor.mjs"
   },
   "engines": {

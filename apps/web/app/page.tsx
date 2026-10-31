@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { networkLabel, networkName } from "@mandate/chain";
 import { SiteFooter, SiteHeader } from "@/components/brand";
+import { getAppConfig } from "@/lib/config";
 import {
   AlertIcon,
   AnchorIcon,
@@ -45,6 +47,8 @@ const reviewStates = [
 ];
 
 export default function HomePage() {
+  const config = getAppConfig();
+  const network = networkLabel(config.chainId);
   return (
     <>
       <SiteHeader />
@@ -54,7 +58,7 @@ export default function HomePage() {
             <div className="hero-grid">
               <div>
                 <p className="eyebrow">
-                  Agent authorization evidence · BOT Chain testnet
+                  Agent authorization evidence · {network}
                 </p>
                 <h1>
                   Approve the action.
@@ -62,8 +66,8 @@ export default function HomePage() {
                   Verify what <em>happened</em>.
                 </h1>
                 <p className="hero-lede">
-                  Mandate compares an approved intent with activity from a BOT
-                  Chain testnet smart account, then keeps the comparison and its
+                  Mandate compares an approved intent with activity from a{" "}
+                  {network} smart account, then keeps the comparison and its
                   coverage gaps in a reviewable ledger.
                 </p>
                 <div className="hero-actions">
@@ -78,7 +82,9 @@ export default function HomePage() {
                 <div className="hero-footnote">
                   <span>Read-only app</span>
                   <span>No custody or signing</span>
-                  <span>BOT Chain testnet · 968</span>
+                  <span>
+                    {network} · {config.chainId}
+                  </span>
                 </div>
               </div>
 
@@ -187,7 +193,7 @@ export default function HomePage() {
                 </p>
               </div>
               <p className="section-aside">
-                For testnet agent pilots and review workflows that need a
+                For {network} agent pilots and review workflows that need a
                 readable authorization trail.
               </p>
             </div>
@@ -237,8 +243,8 @@ export default function HomePage() {
                   <div>
                     <h3>Register the smart account</h3>
                     <p>
-                      Add the BOT Chain testnet smart account you want to review.
-                      This is the identity Mandate uses when matching evidence.
+                      Add the {network} smart account you want to review. This
+                      is the identity Mandate uses when matching evidence.
                     </p>
                     <span className="step-tag">Account record</span>
                   </div>
@@ -272,9 +278,9 @@ export default function HomePage() {
                   <div>
                     <h3>Attach public evidence</h3>
                     <p>
-                      Mandate fetches a transaction or UserOperation from BOT
-                      Chain testnet, checks that the sender matches the account,
-                      and compares it with the intent and policy.
+                      Mandate fetches a transaction or UserOperation from{" "}
+                      {network}, checks that the sender matches the account, and
+                      compares it with the intent and policy.
                     </p>
                     <span className="step-tag">RPC · BOT Scan · Bundler</span>
                   </div>
@@ -412,8 +418,8 @@ export default function HomePage() {
                 <p className="eyebrow">Sample workspace</p>
                 <h2>See the review trail for yourself.</h2>
                 <p>
-                  Explore the sample workspace or register a BOT Chain testnet
-                  smart account. Every sample record is labeled.
+                  Explore the sample workspace or register a {network} smart
+                  account. Every sample record is labeled.
                 </p>
               </div>
               <div className="cta-actions">
@@ -434,9 +440,9 @@ export default function HomePage() {
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Built for BOT Chain</p>
-                <h2>BOT Chain testnet only.</h2>
+                <h2>{networkName(config.chainId)} only.</h2>
                 <p>
-                  Runs on BOT Chain Bohr testnet and reads ERC-4337 v0.7
+                  Runs on {networkName(config.chainId)} and reads ERC-4337 v0.7
                   activity. It does not connect a wallet or submit transactions.
                 </p>
               </div>
@@ -448,7 +454,7 @@ export default function HomePage() {
             <div className="trust-strip trust-strip-flush">
               <div className="trust-item">
                 <strong>Chain</strong>
-                BOT Chain Bohr testnet · 968
+                {networkName(config.chainId)} · {config.chainId}
               </div>
               <div className="trust-item">
                 <strong>EntryPoint</strong>

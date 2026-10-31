@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { formatDateTime } from "@mandate/chain";
+import { formatDateTime, networkLabel } from "@mandate/chain";
 import { AgentIcon, ArrowRightIcon, PlusIcon } from "@/components/icons";
 import { EmptyState, PageHeader, SampleBadge } from "@/components/ui";
+import { getAppConfig } from "@/lib/config";
 import { listAgents } from "@/lib/repo";
 
 export const metadata = {
@@ -9,6 +10,7 @@ export const metadata = {
 };
 
 export default function AgentsPage() {
+  const network = networkLabel(getAppConfig().chainId);
   const agents = listAgents();
 
   return (
@@ -16,7 +18,7 @@ export default function AgentsPage() {
       <PageHeader
         eyebrow="Smart accounts"
         title="Agents"
-        description="Each agent is a BOT Chain testnet smart account with its own policy history, approved intents, and evidence ledger."
+        description={`Each agent is a ${network} smart account with its own policy history, approved intents, and evidence ledger.`}
         actions={
           <Link href="/app/agents/new" className="button button-ink">
             <PlusIcon size={15} />
@@ -29,7 +31,7 @@ export default function AgentsPage() {
         <EmptyState
           icon={<AgentIcon size={20} />}
           title="No agents registered"
-          body="Add the smart account you want to review. Mandate will use it to match public BOT Chain testnet evidence."
+          body={`Add the smart account you want to review. Mandate will use it to match public ${network} evidence.`}
           action={
             <Link href="/app/agents/new" className="button button-ink">
               Register the first agent

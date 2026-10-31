@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  BOT_TESTNET_CHAIN_ID,
   SAMPLE_SMART_ACCOUNT,
   SAMPLE_USER_OPERATION_HASH,
   SAMPLE_USER_OPERATION_TX_HASH,
+  networkLabel,
 } from "@mandate/chain";
 import { CopyButton } from "@/components/copy-button";
 import { AttachEvidenceForm } from "@/components/forms";
 import { ArrowRightIcon, SearchIcon } from "@/components/icons";
 import { Note, PageHeader } from "@/components/ui";
 import { attachEvidenceAction } from "@/lib/actions";
+import { getAppConfig } from "@/lib/config";
 import { getAgent, getCurrentPolicy, listIntents } from "@/lib/repo";
 
 export const metadata = {
@@ -25,6 +28,8 @@ export default async function AttachEvidencePage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const config = getAppConfig();
+  const network = networkLabel(config.chainId);
   const agent = getAgent(id);
   if (!agent) notFound();
 
@@ -41,7 +46,7 @@ export default async function AttachEvidencePage({
       <PageHeader
         eyebrow="Evidence"
         title="Attach chain evidence"
-        description="Fetch a public BOT Chain testnet transaction or UserOperation, check that the sender matches the account, and record the comparison."
+        description={`Fetch a public ${network} transaction or UserOperation, check that the sender matches the account, and record the comparison.`}
         actions={
           <>
             <Link
@@ -127,35 +132,37 @@ export default async function AttachEvidencePage({
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-head">
-                <div>
-                  <h2>Verified testnet examples</h2>
-                  <p>For the sample smart account</p>
-                </div>
-              </div>
-              <div className="card-body stack">
-                <div>
-                  <p className="field-label">UserOperation</p>
-                  <div className="inline-hash">
-                    <code>{SAMPLE_USER_OPERATION_HASH}</code>
-                    <CopyButton value={SAMPLE_USER_OPERATION_HASH} />
+            {config.chainId === BOT_TESTNET_CHAIN_ID ? (
+              <div className="card">
+                <div className="card-head">
+                  <div>
+                    <h2>Verified testnet examples</h2>
+                    <p>For the sample smart account</p>
                   </div>
                 </div>
-                <div>
-                  <p className="field-label">Outer transaction</p>
-                  <div className="inline-hash">
-                    <code>{SAMPLE_USER_OPERATION_TX_HASH}</code>
-                    <CopyButton value={SAMPLE_USER_OPERATION_TX_HASH} />
+                <div className="card-body stack">
+                  <div>
+                    <p className="field-label">UserOperation</p>
+                    <div className="inline-hash">
+                      <code>{SAMPLE_USER_OPERATION_HASH}</code>
+                      <CopyButton value={SAMPLE_USER_OPERATION_HASH} />
+                    </div>
                   </div>
+                  <div>
+                    <p className="field-label">Outer transaction</p>
+                    <div className="inline-hash">
+                      <code>{SAMPLE_USER_OPERATION_TX_HASH}</code>
+                      <CopyButton value={SAMPLE_USER_OPERATION_TX_HASH} />
+                    </div>
+                  </div>
+                  <p className="source-note">
+                    These records belong to smart account{" "}
+                    <span className="mono-small">{SAMPLE_SMART_ACCOUNT}</span>.
+                    A different registered account will fail the sender check.
+                  </p>
                 </div>
-                <p className="source-note">
-                  These records belong to smart account{" "}
-                  <span className="mono-small">{SAMPLE_SMART_ACCOUNT}</span>.
-                  A different registered account will fail the sender check.
-                </p>
               </div>
-            </div>
+            ) : null}
 
             <Note tone="warning">
               A bundled EntryPoint transaction cannot be attached as a

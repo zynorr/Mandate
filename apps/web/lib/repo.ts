@@ -400,7 +400,7 @@ export function createIntent(
     policyId,
     policyVersion: policy.version,
     policyHash: policy.hash,
-    chainId: 968 as const,
+    chainId: policy.chainId,
     ...draft,
     createdAt,
   };

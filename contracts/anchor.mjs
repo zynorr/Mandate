@@ -3,6 +3,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import {
+  requireMainnetConfirmation,
+  resolveDeploymentTarget,
+} from "./networks.mjs";
 
 const contractsDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(contractsDir, "..");
@@ -12,7 +16,6 @@ const artifactPath = path.join(
   "artifacts",
   "MandateAnchorRegistry.json",
 );
-const deploymentPath = path.join(contractsDir, "deployments", "968.json");
 
 const kinds = {
   policy: 0,
@@ -48,8 +51,15 @@ const readEnvFile = (filePath) => {
 
 const fileEnv = readEnvFile(envPath);
 const privateKey = process.env.DEPLOYER_PRIVATE_KEY ?? fileEnv.DEPLOYER_PRIVATE_KEY;
-const rpcUrl =
-  process.env.BOT_RPC_URL ?? fileEnv.BOT_RPC_URL ?? "https://rpc.bohr.life";
+const { network, rpcUrl } = resolveDeploymentTarget({
+  BOT_CHAIN_ID: process.env.BOT_CHAIN_ID ?? fileEnv.BOT_CHAIN_ID,
+  BOT_RPC_URL: process.env.BOT_RPC_URL ?? fileEnv.BOT_RPC_URL,
+});
+const deploymentPath = path.join(
+  contractsDir,
+  "deployments",
+  `${network.chainId}.json`,
+);
 
 if (!privateKey?.match(/^0x[0-9a-fA-F]{64}$/)) {
   throw new Error("DEPLOYER_PRIVATE_KEY is missing or malformed");
@@ -57,13 +67,18 @@ if (!privateKey?.match(/^0x[0-9a-fA-F]{64}$/)) {
 
 const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
 const deployment = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
+if (deployment.chainId !== network.chainId) {
+  throw new Error(
+    `Deployment record ${deploymentPath} is for chain ${deployment.chainId}, not ${network.name} (${network.chainId}).`,
+  );
+}
 const chain = {
-  id: 968,
-  name: "BOT Chain Bohr Testnet",
-  nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+  id: network.chainId,
+  name: network.name,
+  nativeCurrency: network.nativeCurrency,
   rpcUrls: { default: { http: [rpcUrl] } },
   blockExplorers: {
-    default: { name: "BOT Scan", url: "https://scan.bohr.life" },
+    default: { name: network.explorerName, url: network.explorerUrl },
   },
 };
 const account = privateKeyToAccount(privateKey);
@@ -73,6 +88,13 @@ const walletClient = createWalletClient({
   chain,
   transport: http(rpcUrl),
 });
+
+const actualChainId = await publicClient.getChainId();
+if (actualChainId !== network.chainId) {
+  throw new Error(
+    `The RPC reports chain ${actualChainId}; expected ${network.name} (${network.chainId}). Set BOT_CHAIN_ID and BOT_RPC_URL for the intended network.`,
+  );
+}
 
 const [recorder, timestamp, existingKind, exists] = await publicClient.readContract(
   {
@@ -100,6 +122,8 @@ if (exists) {
   );
   process.exit(0);
 }
+
+requireMainnetConfirmation(network, process.env);
 
 const hash = await walletClient.writeContract({
   address: deployment.address,

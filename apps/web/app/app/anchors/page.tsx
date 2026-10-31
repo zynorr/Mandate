@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { formatDateTime, shortenHash } from "@mandate/chain";
+import {
+  formatDateTime,
+  networkLabel,
+  shortenHash,
+} from "@mandate/chain";
 import { CopyButton } from "@/components/copy-button";
 import { AnchorIcon, ArrowUpRightIcon } from "@/components/icons";
 import { Note, PageHeader } from "@/components/ui";
@@ -8,6 +12,7 @@ import {
   getAnchorLookup,
   getAnchorRegistry,
 } from "@/lib/anchors";
+import { getAppConfig } from "@/lib/config";
 import { anchorKindLabel } from "@/lib/labels";
 
 export const metadata = {
@@ -22,6 +27,8 @@ export default async function AnchorsPage({
   searchParams: Promise<{ hash?: string | string[] }>;
 }) {
   const query = await searchParams;
+  const config = getAppConfig();
+  const network = networkLabel(config.chainId);
   const rawHash = Array.isArray(query.hash) ? query.hash[0] : query.hash;
   const contentHash = rawHash?.trim() ?? "";
   const validHash = hashPattern.test(contentHash);
@@ -41,8 +48,8 @@ export default async function AnchorsPage({
         description={
           <>
             Check whether a policy hash, intent fingerprint, or report
-            fingerprint is recorded on BOT Chain testnet. Mandate reads the
-            registry; it does not write to it.
+            fingerprint is recorded on {network}. Mandate reads the registry;
+            it does not write to it.
           </>
         }
       />
@@ -59,7 +66,9 @@ export default async function AnchorsPage({
               />
             </div>
             <div className="kv-inline kv-spaced">
-              <span>BOT Chain testnet · 968</span>
+              <span>
+                {config.networkName} · {config.chainId}
+              </span>
               <span>
                 {count === null
                   ? "Anchor count unavailable"

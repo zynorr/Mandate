@@ -1,8 +1,8 @@
 # Mandate
 
-Mandate is a read-only evidence ledger for agent actions on **BOT Chain Bohr testnet** (chain ID 968). It records the action a human approved, the policy version that applied, and the public transaction or ERC-4337 UserOperation that actually happened. It then shows where the record matches, where it does not, and what evidence is missing.
+Mandate is a read-only evidence ledger for agent actions on **BOT Chain** — mainnet (chain ID 677) or Bohr testnet (chain ID 968). It records the action a human approved, the policy version that applied, and the public transaction or ERC-4337 UserOperation that actually happened. It then shows where the record matches, where it does not, and what evidence is missing.
 
-Mandate does not hold funds, sign messages, submit UserOperations, or enforce policy on-chain. An optional anchor registry records policy, intent, and report hashes on BOT Chain testnet; the app only reads those anchors.
+Mandate does not hold funds, sign messages, submit UserOperations, or enforce policy on-chain. An optional anchor registry records policy, intent, and report hashes on BOT Chain; the app only reads those anchors.
 
 ## Quick start
 
@@ -28,6 +28,36 @@ To reset local data, stop the server and remove `data/mandate.db`, `data/mandate
 4. No environment variables are required by default. On Vercel the app uses `/tmp/mandate.db`; it is ephemeral and resets when a function instance is recycled.
 5. Set `MANDATE_DATABASE_PATH=/tmp/mandate.db` only if you want to override that path.
 
+## Mainnet deployment
+
+The app supports BOT Chain mainnet (chain ID 677) and Bohr testnet (chain ID 968). `BOT_CHAIN_ID` selects the network and any other chain ID is rejected at startup. RPC, Bundler, explorer, and EntryPoint defaults follow the selected network, so mainnet only needs the following environment:
+
+```
+BOT_CHAIN_ID=677
+MANDATE_ANCHOR_REGISTRY_ADDRESS=0xc69367d69b12bc14397773d11ad462f2f1d7aeb4
+MANDATE_SEED_DEMO=false
+```
+
+Set `MANDATE_SEED_DEMO=false` for a clean ledger. Sample records are illustrative; they are not mainnet evidence. On Vercel the SQLite file is still ephemeral, so a durable mainnet workspace needs `MANDATE_DATABASE_PATH` pointed at persistent storage or a local deployment.
+
+Mainnet contract operations use the same scripts with an explicit confirmation guard:
+
+```powershell
+# Deploy the registry to mainnet (writes contracts/deployments/677.json)
+$env:BOT_CHAIN_ID = "677"
+$env:DEPLOY_CONFIRM_MAINNET = "1"
+npm run contracts:deploy
+Remove-Item Env:BOT_CHAIN_ID, Env:DEPLOY_CONFIRM_MAINNET
+
+# Anchor a hash on mainnet
+$env:BOT_CHAIN_ID = "677"
+$env:DEPLOY_CONFIRM_MAINNET = "1"
+npm run contracts:anchor -- --kind policy --hash 0x...
+Remove-Item Env:BOT_CHAIN_ID, Env:DEPLOY_CONFIRM_MAINNET
+```
+
+Without `DEPLOY_CONFIRM_MAINNET=1`, the deploy and anchor scripts refuse to send a mainnet transaction. Use a dedicated deploy key that holds only gas funds.
+
 ## Scripts
 
 | Command | Purpose |
@@ -40,7 +70,9 @@ To reset local data, stop the server and remove `data/mandate.db`, `data/mandate
 | `npm run lint` | Lint the web app. |
 | `npm run check` | Run typecheck, unit tests, lint, and contract compilation. |
 | `npm run contracts:compile` | Compile the anchor registry with `solc`. |
-| `npm run contracts:deploy` | Compile and deploy the registry to BOT Chain testnet. |
+| `npm run contracts:deploy` | Compile and deploy the registry to BOT Chain testnet (default). |
+| `npm run contracts:deploy:mainnet` | Compile and deploy the registry to BOT Chain mainnet after explicit confirmation. |
+| `npm run contracts:test` | Run deployment-network and confirmation safety tests. |
 | `npm run contracts:anchor -- --kind policy --hash 0x...` | Anchor a policy, intent, report, or evidence hash. |
 
 Run the opt-in live BOT testnet test in PowerShell with:
@@ -70,7 +102,16 @@ The test suite contains a verified BOT Chain testnet sample. To exercise live at
 
 ## Anchor registry
 
-The registry is deployed on BOT Chain Bohr testnet:
+The registry is deployed on both supported networks.
+
+BOT Chain mainnet (chain ID 677):
+
+- Contract: `0xc69367d69b12bc14397773d11ad462f2f1d7aeb4`
+- Deployment transaction: `0x6fba151a852905a2bb0be946db5bdab3915d5396165f01e47260a44fb624787f`
+- Block: `28655203`
+- Explorer: `https://scan.botchain.ai/address/0xc69367d69b12bc14397773d11ad462f2f1d7aeb4`
+
+BOT Chain Bohr testnet (chain ID 968):
 
 - Contract: `0xe923e156570961283198faad9e59744b49d1e523`
 - Deployment transaction: `0x1509a5fd4ca468a00151e8a5d6f0540daa740fcd72468b7b42eef3b24fef0756`
@@ -79,11 +120,18 @@ The registry is deployed on BOT Chain Bohr testnet:
 
 The contract stores a content hash, kind, recorder address, and block timestamp. It has no owner, custody, enforcement, upgrade path, or deletion. The first recorder of a hash wins. An anchor proves that a hash was recorded on chain by an address at a time; it does not prove authorship, correctness, or that the underlying record is current.
 
-The workspace reads anchors through `MANDATE_ANCHOR_REGISTRY_ADDRESS` and never creates them. Deployments use a burner testnet key stored locally in `.env.deploy.local`, which is ignored by git. Do not use a funded mainnet key.
+The workspace reads anchors through `MANDATE_ANCHOR_REGISTRY_ADDRESS` and never creates them. Never use a private key pasted into chat, source control, or a shared environment. For mainnet, use a newly generated dedicated deployer key with only the BOT needed for gas, stored in a secret manager or local ignored `.env.deploy.local`; verify its exposure status first and never reuse a compromised key.
 
 ```powershell
-# Deploy the registry and write contracts/deployments/968.json
+# Deploy the registry to testnet and write contracts/deployments/968.json
 npm run contracts:deploy
+
+# Mainnet: review the contract and RPC, configure a fresh dedicated deployer key,
+# then explicitly select chain 677 and confirm in the current PowerShell session.
+$env:BOT_CHAIN_ID = "677"
+$env:DEPLOY_CONFIRM_MAINNET = "1"
+npm run contracts:deploy:mainnet
+Remove-Item Env:BOT_CHAIN_ID, Env:DEPLOY_CONFIRM_MAINNET
 
 # Anchor a specific hash
 npm run contracts:anchor -- --kind policy --hash 0x...
@@ -112,7 +160,7 @@ Useful API routes:
 
 ## Boundaries and limitations
 
-- Testnet only. The app rejects a chain ID other than 968.
+- The app supports BOT Chain mainnet (677) and Bohr testnet (968); testnet remains the default. Confirm all configured RPC, explorer, Bundler, EntryPoint, and persistent database settings before operating the app on mainnet.
 - No wallet connection, authentication, custody, signing, UserOperation submission, EIP-7702 delegation, or paymaster flow.
 - No on-chain enforcement. Policies are local review rules. The anchor registry records hashes only; it does not enforce policy, custody funds, or prove authorship.
 - Public explorer data may be incomplete. Inner-call decoding and token amounts are not guaranteed. The UI and reports keep those gaps visible.

@@ -2,9 +2,11 @@ import Link from "next/link";
 import {
   formatDateTime,
   formatRelative,
+  networkLabel,
   shortenHash,
   type EvidenceVerdict,
 } from "@mandate/chain";
+import { getAppConfig } from "@/lib/config";
 import { EvidenceTable } from "@/components/evidence-table";
 import {
   ArrowRightIcon,
@@ -53,6 +55,7 @@ const activityLabel = (kind: string) => {
 };
 
 export default function WorkspaceOverviewPage() {
+  const network = networkLabel(getAppConfig().chainId);
   const summary = getLedgerSummary();
   const agents = listAgents();
   const sampleAgentCount = agents.filter((agent) => agent.isDemo).length;
@@ -65,7 +68,7 @@ export default function WorkspaceOverviewPage() {
       <PageHeader
         eyebrow="Workspace overview"
         title="Evidence ledger"
-        description="Track what was approved, what the smart account did on BOT Chain testnet, and where the record is incomplete."
+        description={`Track what was approved, what the smart account did on ${network}, and where the record is incomplete.`}
         actions={
           <>
             <Link href="/app/agents/new" className="button button-ghost">
@@ -247,7 +250,7 @@ export default function WorkspaceOverviewPage() {
             <div className="card-body">
               {agents.length === 0 ? (
                 <p className="small-muted">
-                  Register a BOT Chain testnet smart account to start a ledger.
+                  Register a {network} smart account to start a ledger.
                 </p>
               ) : (
                 <div className="agent-list">
