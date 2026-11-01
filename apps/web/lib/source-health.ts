@@ -2,7 +2,6 @@ import "server-only";
 
 import { z } from "zod";
 import {
-  BOT_TESTNET_CHAIN_ID,
   RpcClient,
   fetchJson,
 } from "@mandate/chain";
@@ -80,7 +79,7 @@ export async function readSourceHealth(): Promise<SourceHealth> {
   const checks = await Promise.all([
     timed("rpc", "BOT RPC", async () => {
       const chainId = await rpc.getChainId();
-      if (chainId !== BOT_TESTNET_CHAIN_ID) {
+      if (chainId !== config.chainId) {
         throw new Error(`Unexpected chain ID ${chainId}.`);
       }
       return `Chain ID ${chainId} verified.`;
