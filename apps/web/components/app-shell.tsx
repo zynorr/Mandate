@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BOT_MAINNET_CHAIN_ID } from "@mandate/chain";
 import { getAppConfig } from "@/lib/config";
+import { networkLabel } from "@mandate/chain";
 import { AppNav } from "./app-nav";
 import { SiteFooter, Wordmark } from "./brand";
 
@@ -20,8 +20,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const config = getAppConfig();
-  const shortNetwork =
-    config.chainId === BOT_MAINNET_CHAIN_ID ? "BOT mainnet" : "BOT testnet";
+  const shortNetwork = networkLabel(config.chainId);
   return (
     <div className="app-frame">
       <aside className="app-sidebar">

@@ -3,7 +3,8 @@ import "server-only";
 import path from "node:path";
 import { z } from "zod";
 import {
-  BOT_TESTNET,
+  BOT_MAINNET,
+  BOT_MAINNET_CHAIN_ID,
   BOT_TESTNET_CHAIN_ID,
   KNOWN_CHAIN_IDS,
   isKnownChainId,
@@ -17,10 +18,10 @@ const booleanString = z
   .transform((value) => value === "true" || value === "1");
 
 const defaultNetwork =
-  networkFor(Number(process.env.BOT_CHAIN_ID)) ?? BOT_TESTNET;
+  networkFor(Number(process.env.BOT_CHAIN_ID)) ?? BOT_MAINNET;
 
 const envSchema = z.object({
-  BOT_CHAIN_ID: z.coerce.number().int().default(BOT_TESTNET_CHAIN_ID),
+  BOT_CHAIN_ID: z.coerce.number().int().default(BOT_MAINNET_CHAIN_ID),
   BOT_RPC_URL: z.string().url().default(defaultNetwork.rpcUrl),
   BOT_BUNDLER_URL: z.string().url().default(defaultNetwork.bundlerUrl),
   BOT_EXPLORER_URL: z.string().url().default(defaultNetwork.explorerUrl),
