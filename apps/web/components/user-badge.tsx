@@ -17,7 +17,11 @@ export function UserBadge({
       <span className="user-identity">
         <strong>{displayName}</strong>
         <small>
-          {user.mode === "local" ? "Local workspace" : `@${user.login}`}
+          {user.mode === "local"
+            ? "Local workspace"
+            : user.mode === "google"
+              ? user.login
+              : `@${user.login}`}
         </small>
       </span>
       {user.mode === "local" ? (

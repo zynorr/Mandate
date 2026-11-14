@@ -14,7 +14,7 @@ export async function GET(request: Request) {
         status: 401,
         headers: {
           "cache-control": "no-store",
-          "www-authenticate": "GitHub",
+          "www-authenticate": "Google",
         },
       },
     );

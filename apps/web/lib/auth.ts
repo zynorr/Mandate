@@ -8,6 +8,7 @@ import { getAppConfig } from "./config";
 export const SESSION_COOKIE = "mandate_session";
 export const OAUTH_STATE_COOKIE = "mandate_oauth_state";
 export const OAUTH_RETURN_COOKIE = "mandate_oauth_return";
+export const OAUTH_NONCE_COOKIE = "mandate_oauth_nonce";
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const OAUTH_TTL_SECONDS = 60 * 10;
@@ -19,7 +20,7 @@ export type SessionUser = {
   login: string;
   name: string | null;
   avatarUrl: string | null;
-  mode: "github" | "local";
+  mode: "google" | "local";
 };
 
 export const LOCAL_OWNER_ID = "local";
@@ -64,8 +65,8 @@ export function requestOrigin(request: Request): string {
   return new URL(request.url).origin;
 }
 
-export function githubCallbackUrl(origin: string): string {
-  return `${origin}/api/auth/github/callback`;
+export function googleCallbackUrl(origin: string): string {
+  return `${origin}/api/auth/google/callback`;
 }
 
 export function isSecureOrigin(origin: string): boolean {
@@ -109,7 +110,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const ownerId = payload.sub;
     if (
       typeof ownerId !== "string" ||
-      !ownerId.startsWith("github:") ||
+      !ownerId.startsWith("google:") ||
       typeof payload.login !== "string" ||
       payload.login.length === 0
     ) {
@@ -121,7 +122,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       name: typeof payload.name === "string" ? payload.name : null,
       avatarUrl:
         typeof payload.avatarUrl === "string" ? payload.avatarUrl : null,
-      mode: "github",
+      mode: "google",
     };
   } catch {
     return null;
@@ -153,7 +154,10 @@ export async function setSessionCookie(
 }
 
 export async function setOAuthCookie(
-  name: typeof OAUTH_STATE_COOKIE | typeof OAUTH_RETURN_COOKIE,
+  name:
+    | typeof OAUTH_STATE_COOKIE
+    | typeof OAUTH_RETURN_COOKIE
+    | typeof OAUTH_NONCE_COOKIE,
   value: string,
   origin: string,
 ): Promise<void> {
@@ -171,7 +175,11 @@ export async function setOAuthCookie(
 
 export async function clearOAuthCookies(): Promise<void> {
   const cookieStore = await cookies();
-  for (const name of [OAUTH_STATE_COOKIE, OAUTH_RETURN_COOKIE]) {
+  for (const name of [
+    OAUTH_STATE_COOKIE,
+    OAUTH_RETURN_COOKIE,
+    OAUTH_NONCE_COOKIE,
+  ]) {
     cookieStore.delete(name);
   }
 }

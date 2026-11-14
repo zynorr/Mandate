@@ -40,11 +40,11 @@ const envSchema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/)
     .optional(),
-  MANDATE_AUTH_MODE: z.enum(["github", "local"]).optional(),
+  MANDATE_AUTH_MODE: z.enum(["google", "local"]).optional(),
   MANDATE_AUTH_SECRET: optionalSecret,
   MANDATE_PUBLIC_URL: z.string().url().optional(),
-  GITHUB_CLIENT_ID: optionalSecret,
-  GITHUB_CLIENT_SECRET: optionalSecret,
+  GOOGLE_CLIENT_ID: optionalSecret,
+  GOOGLE_CLIENT_SECRET: optionalSecret,
 });
 
 function repositoryRoot(): string {
@@ -132,38 +132,38 @@ function resolveDatabaseConfig(input: {
 }
 
 export interface AuthConfig {
-  mode: "github" | "local";
+  mode: "google" | "local";
   error: string | null;
-  githubClientId: string | null;
-  githubClientSecret: string | null;
+  googleClientId: string | null;
+  googleClientSecret: string | null;
   secret: string | null;
   publicUrl: string | null;
 }
 
 function resolveAuthConfig(input: {
-  mode?: "github" | "local";
+  mode?: "google" | "local";
   secret?: string;
   publicUrl?: string;
-  githubClientId?: string;
-  githubClientSecret?: string;
+  googleClientId?: string;
+  googleClientSecret?: string;
   database: DatabaseConfig;
 }): AuthConfig {
   const hosted = isHostedRuntime() || input.database.mode === "remote";
-  const hasGithubCredentials = Boolean(
-    input.githubClientId && input.githubClientSecret,
+  const hasGoogleCredentials = Boolean(
+    input.googleClientId && input.googleClientSecret,
   );
   const mode =
-    input.mode ?? (hasGithubCredentials || hosted ? "github" : "local");
+    input.mode ?? (hasGoogleCredentials || hosted ? "google" : "local");
   let error: string | null = null;
 
   if (mode === "local" && hosted) {
     error =
-      "Local auth mode cannot be used with a hosted database. Configure GitHub OAuth instead.";
+      "Local auth mode cannot be used with a hosted database. Configure Google OAuth instead.";
   }
-  if (mode === "github") {
-    if (!input.githubClientId || !input.githubClientSecret) {
+  if (mode === "google") {
+    if (!input.googleClientId || !input.googleClientSecret) {
       error =
-        "GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET.";
+        "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.";
     } else if (!input.secret) {
       error =
         "MANDATE_AUTH_SECRET is required. Use a random value of at least 32 characters.";
@@ -184,8 +184,8 @@ function resolveAuthConfig(input: {
   return {
     mode,
     error,
-    githubClientId: input.githubClientId ?? null,
-    githubClientSecret: input.githubClientSecret ?? null,
+    googleClientId: input.googleClientId ?? null,
+    googleClientSecret: input.googleClientSecret ?? null,
     secret: input.secret ?? null,
     publicUrl: input.publicUrl?.replace(/\/+$/, "") ?? null,
   };
@@ -236,8 +236,8 @@ export function getAppConfig(): AppConfig {
     mode: parsed.data.MANDATE_AUTH_MODE,
     secret: parsed.data.MANDATE_AUTH_SECRET,
     publicUrl: parsed.data.MANDATE_PUBLIC_URL,
-    githubClientId: parsed.data.GITHUB_CLIENT_ID,
-    githubClientSecret: parsed.data.GITHUB_CLIENT_SECRET,
+    googleClientId: parsed.data.GOOGLE_CLIENT_ID,
+    googleClientSecret: parsed.data.GOOGLE_CLIENT_SECRET,
     database,
   });
 

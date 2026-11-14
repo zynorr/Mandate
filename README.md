@@ -16,25 +16,25 @@ npm run dev
 
 Open `http://localhost:3000` for the product overview and `http://localhost:3000/app` for the workspace.
 
-With a local database and no GitHub credentials, Mandate runs in local owner mode. The workspace belongs to the built-in `local` owner and the database is created automatically at `data/mandate.db`. On the first workspace visit, Mandate seeds clearly labelled sample records for that account. Set `MANDATE_SEED_DEMO=false` before the first start for an empty workspace.
+With a local database and no Google credentials, Mandate runs in local owner mode. The workspace belongs to the built-in `local` owner and the database is created automatically at `data/mandate.db`. On the first workspace visit, Mandate seeds clearly labelled sample records for that account. Set `MANDATE_SEED_DEMO=false` before the first start for an empty workspace.
 
 To reset local data, stop the server and remove `data/mandate.db`, `data/mandate.db-wal`, and `data/mandate.db-shm`.
 
-To exercise GitHub sign-in locally, create a GitHub OAuth app whose callback URL is `http://localhost:3000/api/auth/github/callback`, then add `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and a random `MANDATE_AUTH_SECRET` of at least 32 characters to `apps/web/.env.local`. Do not set `MANDATE_AUTH_MODE=github` when using a hosted database unless all three values are present.
+To exercise Google sign-in locally, create a Google OAuth web application whose callback URL is `http://localhost:3000/api/auth/google/callback`, then add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and a random `MANDATE_AUTH_SECRET` of at least 32 characters to `apps/web/.env.local`. Do not set `MANDATE_AUTH_MODE=google` when using a hosted database unless all three values are present.
 
 ## Accounts and workspace isolation
 
-- GitHub OAuth identifies the account. The app requests only the `read:user` scope and does not read repositories.
-- The owner key is the immutable GitHub numeric ID (`github:<id>`), so changing a GitHub username does not move or expose a workspace.
+- Google OpenID Connect identifies the account. The app requests only the `openid email profile` scopes and does not access Drive or other Google content.
+- The owner key is the immutable Google subject (`google:<sub>`), so profile changes do not move or expose a workspace.
 - Agents, policies, intents, evidence, and activity all carry an `owner_id`. Every repository query and API route is scoped to the signed-in owner.
 - The workspace layout requires a session. Report and discovery API routes return `401` when no valid session is present; other accounts' records return `404` rather than leaking their existence.
 - Sessions are signed, HttpOnly JWTs in the `mandate_session` cookie (HS256, 30-day expiry, `SameSite=Lax`, `Secure` on HTTPS). `MANDATE_AUTH_SECRET` signs them.
 - New accounts receive a labelled sample workspace on first use unless `MANDATE_SEED_DEMO=false`, or unless the account already has agents.
 - Each account has a separate ledger. Invitations, teams, roles, and shared workspaces are not implemented yet.
 
-The hosted deployment fails closed. A remote or Vercel database requires `MANDATE_DATABASE_URL`, and GitHub OAuth requires `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `MANDATE_AUTH_SECRET`. Local auth mode is rejected when the database is remote.
+The hosted deployment fails closed. A remote or Vercel database requires `MANDATE_DATABASE_URL`, and Google OAuth requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `MANDATE_AUTH_SECRET`. Local auth mode is rejected when the database is remote.
 
-## Hosted deployment (Turso + GitHub OAuth)
+## Hosted deployment (Turso + Google OAuth)
 
 Use a Turso/libSQL database for the hosted app. The serverless filesystem is ephemeral, so a local SQLite path is not durable on Vercel.
 
@@ -46,15 +46,15 @@ Use a Turso/libSQL database for the hosted app. The serverless filesystem is eph
    turso db tokens create mandate
    ```
 
-2. Create a GitHub OAuth app. Set the callback URL to `https://<your-domain>/api/auth/github/callback`. The app requests only `read:user`.
+2. Create a Google OAuth web application. Add `https://<your-domain>/api/auth/google/callback` as an authorized redirect URI. The app requests `openid email profile`.
 
 3. Configure the Vercel project:
 
    ```text
    MANDATE_DATABASE_URL=libsql://<database>-<org>.turso.io
    MANDATE_DATABASE_AUTH_TOKEN=<turso-token>
-   GITHUB_CLIENT_ID=<github-client-id>
-   GITHUB_CLIENT_SECRET=<github-client-secret>
+   GOOGLE_CLIENT_ID=<google-client-id>
+   GOOGLE_CLIENT_SECRET=<google-client-secret>
    MANDATE_AUTH_SECRET=<at-least-32-random-characters>
    MANDATE_PUBLIC_URL=https://<your-domain>
    BOT_CHAIN_ID=677
@@ -72,9 +72,9 @@ Use a Turso/libSQL database for the hosted app. The serverless filesystem is eph
 
 5. Deploy. The schema is created or migrated automatically on the first database connection. Missing hosted database or OAuth configuration stops the app instead of falling back to a shared public workspace.
 
-6. Smoke-test the deployment: open `/signin`, complete GitHub sign-in, confirm `/app` loads only that account's records, export a report, and confirm a signed-out request to `/api/reports/<agentId>` returns `401`.
+6. Smoke-test the deployment: open `/signin`, complete Google sign-in, confirm `/app` loads only that account's records, export a report, and confirm a signed-out request to `/api/reports/<agentId>` returns `401`.
 
-`MANDATE_PUBLIC_URL` must be the canonical HTTPS origin. It is used to build the GitHub callback URL and decide whether the session cookie is marked `Secure`. If it is omitted or not HTTPS on a hosted deployment, sign-in configuration is treated as invalid.
+`MANDATE_PUBLIC_URL` must be the canonical HTTPS origin. It is used to build the Google callback URL and decide whether the session cookie is marked `Secure`. If it is omitted or not HTTPS on a hosted deployment, sign-in configuration is treated as invalid.
 
 ## Mainnet deployment
 
@@ -86,7 +86,7 @@ MANDATE_ANCHOR_REGISTRY_ADDRESS=0xc69367d69b12bc14397773d11ad462f2f1d7aeb4
 MANDATE_SEED_DEMO=false
 ```
 
-A hosted mainnet workspace additionally needs the Turso and GitHub OAuth variables from the hosted deployment section. Sample records are illustrative, not mainnet evidence. Mainnet anchors are permanent; do not delete or overwrite them.
+A hosted mainnet workspace additionally needs the Turso and Google OAuth variables from the hosted deployment section. Sample records are illustrative, not mainnet evidence. Mainnet anchors are permanent; do not delete or overwrite them.
 
 Mainnet contract operations use the same scripts with an explicit confirmation guard:
 
@@ -122,7 +122,7 @@ Starting the updated app once migrates the local database automatically:
 - replaces global smart-account uniqueness with per-owner `(owner_id, lower(smart_account))` uniqueness;
 - sets `PRAGMA user_version = 2`.
 
-After migration, local development opens the same records under the `local` owner. Hosted GitHub accounts start with their own separate workspace. Verify the result with:
+After migration, local development opens the same records under the `local` owner. Hosted Google accounts start with their own separate workspace. Verify the result with:
 
 ```powershell
 node -e "const {createClient}=require('@libsql/client');(async()=>{const c=createClient({url:'file:///C:/path/to/Mandate/data/mandate.db'});for(const t of ['agents','policies','intents','evidence','activity']){const r=await c.execute('SELECT owner_id, COUNT(*) AS n FROM '+t+' GROUP BY owner_id');console.log(t,r.rows)}const fk=await c.execute('PRAGMA foreign_key_check');console.log('foreign_key_check',fk.rows.length);c.close()})()"
@@ -155,7 +155,7 @@ Remove-Item Env:LIVE_BOT_TESTNET
 
 ## Workflow
 
-1. Sign in with GitHub, or use the local owner in local development.
+1. Sign in with Google, or use the local owner in local development.
 2. Register a BOT Chain smart account as an agent in your workspace.
 3. Publish an immutable policy version for that agent.
 4. Approve one specific intent against that policy snapshot.
@@ -228,7 +228,7 @@ The mainnet registry contains the policy, intent, and report anchors from the do
 
 ## Architecture
 
-- `apps/web` contains the Next.js App Router UI, server actions, GitHub OAuth and session handling, the owner-scoped libSQL repository, discovery, source-health checks, anchor lookups, and the report API.
+- `apps/web` contains the Next.js App Router UI, server actions, Google OAuth and session handling, the owner-scoped libSQL repository, discovery, source-health checks, anchor lookups, and the report API.
 - `packages/chain` contains the domain schemas, hashing, policy evaluation, BOT Scan/Bundler/RPC clients, decoding, evidence reconstruction, anchor reads, and report generation.
 - `contracts` contains the optional `MandateAnchorRegistry` contract and its compile, deploy, and anchor scripts.
 - `data` contains local SQLite runtime storage and is ignored by git.
@@ -239,11 +239,11 @@ Useful API routes:
 - `GET /api/health` checks RPC, Bundler, and BOT Scan. It does not require a session.
 - `GET /api/discovery?agentId=...` lists public activity for an agent owned by the signed-in account. Returns `401` without a session.
 - `GET /api/reports/{agentId}?format=json|md&download=1` exports an evidence report for an owned agent. Returns `401` without a session.
-- `GET /api/auth/github/start`, `GET /api/auth/github/callback`, and `POST /api/auth/signout` implement GitHub sign-in and sign-out.
+- `GET /api/auth/google/start`, `GET /api/auth/google/callback`, and `POST /api/auth/signout` implement Google sign-in and sign-out.
 
 ## Security model and limitations
 
-- Authentication is GitHub identity, not wallet ownership. No wallet connection, custody, signing, UserOperation submission, EIP-7702 delegation, or paymaster flow is implemented.
+- Authentication is Google identity, not wallet ownership. No wallet custody, signing, UserOperation submission, EIP-7702 delegation, or paymaster flow is implemented.
 - Tenant isolation is enforced in application queries by `owner_id`. The database is shared, so anyone with database credentials can read all accounts' records.
 - Sessions are stateless. Signing out clears the cookie, but an already-issued token remains valid until its 30-day expiry unless `MANDATE_AUTH_SECRET` is rotated, which invalidates every session.
 - There are no team invitations, roles, per-account rate limits, or abuse controls yet. Treat this as a pilot release, not an audited multi-tenant security boundary.

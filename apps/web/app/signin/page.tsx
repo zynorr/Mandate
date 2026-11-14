@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 const errorCopy: Record<string, string> = {
   config:
-    "Sign-in is not configured yet. The deployment owner needs to set the GitHub OAuth environment variables.",
-  oauth: "GitHub did not complete the sign-in. Please try again.",
+    "Sign-in is not configured yet. The deployment owner needs to set the Google OAuth environment variables.",
+  oauth: "Google did not complete the sign-in. Please try again.",
   state: "The sign-in request expired or did not match. Please start again.",
 };
 
@@ -51,7 +51,7 @@ export default async function SignInPage({
             <h1>Your evidence ledger, separated from everyone else&apos;s.</h1>
             <p className="signin-lede">
               Mandate stores agents, policies, intents, evidence, and activity
-              per account. Sign in with GitHub to open your own workspace on
+              per account. Sign in with Google to open your own workspace on
               BOT Chain {config.chainId}.
             </p>
             <div className="signin-points">
@@ -66,7 +66,7 @@ export default async function SignInPage({
               <div>
                 <ShieldIcon size={18} />
                 <p>
-                  <strong>No wallet custody.</strong> GitHub identifies your
+                  <strong>No wallet custody.</strong> Google identifies your
                   workspace. Optional wallet actions are approved directly by
                   you; Mandate never sees keys or signs transactions.
                 </p>
@@ -85,8 +85,9 @@ export default async function SignInPage({
             <p className="eyebrow">Continue</p>
             <h2>Sign in to Mandate</h2>
             <p>
-              GitHub is used only for account identity. Mandate requests the
-              basic public profile scope and does not access repositories.
+              Google is used only for account identity. Mandate requests the
+              OpenID Connect profile and email scopes; no Drive or other Google
+              content is accessed.
             </p>
 
             {errorMessage ? (
@@ -97,23 +98,23 @@ export default async function SignInPage({
 
             {configured ? (
               <a
-                href={`/api/auth/github/start?next=${encodeURIComponent(next)}`}
+                href={`/api/auth/google/start?next=${encodeURIComponent(next)}`}
                 className="button button-ink signin-button"
               >
-                Continue with GitHub
+                Continue with Google
                 <ArrowRightIcon size={16} />
               </a>
             ) : (
               <p className="signin-help">
-                For local development, the owner can configure GitHub OAuth or
+                For local development, the owner can configure Google OAuth or
                 set <code>MANDATE_AUTH_MODE=local</code> with a local database.
               </p>
             )}
 
             <p className="signin-fineprint">
-              By continuing, you agree that Mandate may store your GitHub login,
-              display name, and workspace records. No repository contents are
-              read or stored.
+              By continuing, you agree that Mandate may store your Google email,
+              display name, and workspace records. No Google Drive or other
+              account content is read or stored.
             </p>
             <Link href="/" className="text-link">
               Return to the product overview

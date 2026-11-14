@@ -160,7 +160,7 @@ export default function HomePage() {
             <div className="trust-strip" aria-label="Product boundaries">
               <div className="trust-item">
                 <strong>Account-scoped workspace</strong>
-                GitHub sign-in keeps each ledger private. No keys or signing.
+                Google sign-in keeps each ledger private. No keys or signing.
               </div>
               <div className="trust-item">
                 <strong>Specific approvals</strong>

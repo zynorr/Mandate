@@ -34,7 +34,7 @@ export async function GET(
         status: 401,
         headers: {
           "cache-control": "no-store",
-          "www-authenticate": "GitHub",
+          "www-authenticate": "Google",
         },
       },
     );
