@@ -7,6 +7,7 @@ import {
   shortenAddress,
   shortenHash,
 } from "@mandate/chain";
+import { requireUser } from "@/lib/auth";
 import { getAppConfig } from "@/lib/config";
 import { CopyButton } from "@/components/copy-button";
 import { EvidenceTable } from "@/components/evidence-table";
@@ -41,18 +42,27 @@ export default async function AgentPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ intent?: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
   const { intent: intentStatus } = await searchParams;
   const config = getAppConfig();
   const network = networkLabel(config.chainId);
-  const agent = getAgent(id);
+  const agent = await getAgent(user.ownerId, id);
   if (!agent) notFound();
 
-  const policy = getCurrentPolicy(agent.id);
-  const policies = listPolicies(agent.id);
-  const intents = listIntents(agent.id);
-  const evidence = listEvidence({ agentId: agent.id, limit: 25 });
-  const activity = listActivity({ agentId: agent.id, limit: 8 });
+  const policy = await getCurrentPolicy(user.ownerId, agent.id);
+  const policies = await listPolicies(user.ownerId, agent.id);
+  const intents = await listIntents(user.ownerId, agent.id);
+  const evidence = await listEvidence({
+    ownerId: user.ownerId,
+    agentId: agent.id,
+    limit: 25,
+  });
+  const activity = await listActivity({
+    ownerId: user.ownerId,
+    agentId: agent.id,
+    limit: 8,
+  });
 
   return (
     <>

@@ -2,7 +2,7 @@ import "server-only";
 
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { createClient, type Client } from "@libsql/client";
 import { getAppConfig } from "./config";
 import { seedDemoWorkspace } from "./seed";
 
@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS meta (
 
 CREATE TABLE IF NOT EXISTS agents (
   id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   smart_account TEXT NOT NULL,
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS agents (
 
 CREATE TABLE IF NOT EXISTS policies (
   id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
   agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   version INTEGER NOT NULL,
   name TEXT NOT NULL,
@@ -39,11 +41,12 @@ CREATE TABLE IF NOT EXISTS policies (
   UNIQUE(agent_id, version)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS agents_smart_account_idx\n  ON agents(smart_account);\n\nCREATE INDEX IF NOT EXISTS policies_agent_idx
+CREATE INDEX IF NOT EXISTS policies_agent_idx
   ON policies(agent_id, version DESC);
 
 CREATE TABLE IF NOT EXISTS intents (
   id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
   agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   policy_id TEXT NOT NULL REFERENCES policies(id) ON DELETE RESTRICT,
   policy_version INTEGER NOT NULL,
@@ -64,6 +67,7 @@ CREATE INDEX IF NOT EXISTS intents_agent_idx
 
 CREATE TABLE IF NOT EXISTS evidence (
   id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
   agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   intent_id TEXT REFERENCES intents(id) ON DELETE SET NULL,
   policy_id TEXT NOT NULL REFERENCES policies(id) ON DELETE RESTRICT,
@@ -87,6 +91,7 @@ CREATE INDEX IF NOT EXISTS evidence_intent_idx
 
 CREATE TABLE IF NOT EXISTS activity (
   id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL,
   agent_id TEXT REFERENCES agents(id) ON DELETE CASCADE,
   kind TEXT NOT NULL,
   summary TEXT NOT NULL,
@@ -99,29 +104,116 @@ CREATE INDEX IF NOT EXISTS activity_created_idx
 `;
 
 type DbGlobal = typeof globalThis & {
-  __mandateDb?: Database.Database;
+  __mandateDb?: Promise<Client>;
+  __mandateSeededOwners?: Set<string>;
 };
 
-export function getDb(): Database.Database {
-  const globalDb = globalThis as DbGlobal;
-  if (globalDb.__mandateDb) return globalDb.__mandateDb;
+async function columnExists(
+  db: Client,
+  table: string,
+  column: string,
+): Promise<boolean> {
+  const result = await db.execute(`PRAGMA table_info(${table})`);
+  return result.rows.some((row) => row.name === column);
+}
 
-  const config = getAppConfig();
-  fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
-  const db = new Database(config.databasePath);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  db.pragma("busy_timeout = 5000");
-  db.exec(schema);
-  db.pragma("user_version = 1");
+async function ensureOwnerColumn(db: Client, table: string): Promise<void> {
+  if (await columnExists(db, table, "owner_id")) return;
+  try {
+    await db.execute(
+      `ALTER TABLE ${table} ADD COLUMN owner_id TEXT NOT NULL DEFAULT 'local'`,
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.toLowerCase().includes("duplicate column")
+    ) {
+      return;
+    }
+    throw error;
+  }
+}
 
-  if (config.seedDemo) {
-    seedDemoWorkspace(db, {
-      chainId: config.chainId,
-      explorerUrl: config.explorerUrl,
-    });
+async function migrate(db: Client): Promise<void> {
+  await db.executeMultiple(schema);
+
+  for (const table of ["agents", "policies", "intents", "evidence", "activity"]) {
+    await ensureOwnerColumn(db, table);
   }
 
-  globalDb.__mandateDb = db;
+  await db.execute("DROP INDEX IF EXISTS agents_smart_account_idx");
+  await db.executeMultiple(`
+    CREATE UNIQUE INDEX IF NOT EXISTS agents_owner_smart_account_idx
+      ON agents(owner_id, lower(smart_account));
+    CREATE INDEX IF NOT EXISTS agents_owner_idx
+      ON agents(owner_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS policies_owner_agent_idx
+      ON policies(owner_id, agent_id, version DESC);
+    CREATE INDEX IF NOT EXISTS intents_owner_agent_idx
+      ON intents(owner_id, agent_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS evidence_owner_agent_idx
+      ON evidence(owner_id, agent_id, attached_at DESC);
+    CREATE INDEX IF NOT EXISTS activity_owner_created_idx
+      ON activity(owner_id, created_at DESC);
+  `);
+  await db.execute("PRAGMA user_version = 2");
+}
+
+async function initDb(): Promise<Client> {
+  const config = getAppConfig();
+  if (!config.databaseUrl) {
+    throw new Error(
+      config.databaseError ??
+        "No Mandate database is configured. Set MANDATE_DATABASE_URL or MANDATE_DATABASE_PATH.",
+    );
+  }
+
+  if (config.databaseLocalPath) {
+    fs.mkdirSync(path.dirname(config.databaseLocalPath), { recursive: true });
+  }
+
+  const db = createClient({
+    url: config.databaseUrl,
+    authToken: config.databaseAuthToken ?? undefined,
+  });
+
+  try {
+    await migrate(db);
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+
   return db;
+}
+
+export async function getDb(): Promise<Client> {
+  const globalDb = globalThis as DbGlobal;
+  if (!globalDb.__mandateDb) {
+    globalDb.__mandateDb = initDb().catch((error) => {
+      globalDb.__mandateDb = undefined;
+      throw error;
+    });
+  }
+  return globalDb.__mandateDb;
+}
+
+export async function ensureDemoWorkspace(ownerId: string): Promise<void> {
+  const config = getAppConfig();
+  if (!config.seedDemo) return;
+
+  const globalDb = globalThis as DbGlobal;
+  if (globalDb.__mandateSeededOwners?.has(ownerId)) return;
+
+  const db = await getDb();
+  await seedDemoWorkspace(db, {
+    ownerId,
+    chainId: config.chainId,
+    explorerUrl: config.explorerUrl,
+  });
+
+  if (!globalDb.__mandateSeededOwners) {
+    globalDb.__mandateSeededOwners = new Set();
+  }
+  globalDb.__mandateSeededOwners.add(ownerId);
 }

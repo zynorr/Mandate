@@ -138,7 +138,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
             {networkName(config.chainId)} · chain ID {config.chainId}
           </p>
           <p>ERC-4337 v0.7</p>
-          <p>Data stays on this machine</p>
+          <p>Private per signed-in account</p>
         </div>
       </div>
       <div className="footer-bottom">

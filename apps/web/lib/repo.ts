@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import type { Client, Transaction } from "@libsql/client";
 import {
   agentDraftSchema,
   computeIntentFingerprint,
@@ -65,6 +66,8 @@ export type LedgerSummary = {
   sampleCount: number;
   verdictCounts: Record<EvidenceVerdict, number>;
 };
+
+type Queryable = Client | Transaction;
 
 type AgentRow = {
   id: string;
@@ -248,36 +251,84 @@ const agentSelect = `
   FROM agents a
 `;
 
-export function listAgents(): AppAgent[] {
-  const rows = getDb()
-    .prepare(`${agentSelect} ORDER BY a.is_demo ASC, a.created_at DESC`)
-    .all() as AgentRow[];
-  return rows.map(rowToAgent);
+const evidenceSelect = `
+  SELECT
+    e.*,
+    a.name AS agent_name,
+    a.is_demo AS agent_is_demo,
+    a.smart_account AS agent_smart_account,
+    i.title AS intent_title
+  FROM evidence e
+  JOIN agents a ON a.id = e.agent_id
+  LEFT JOIN intents i ON i.id = e.intent_id
+`;
+
+async function runInTransaction<T>(
+  fn: (tx: Transaction) => Promise<T>,
+): Promise<T> {
+  const db = await getDb();
+  const tx = await db.transaction("write");
+  try {
+    const result = await fn(tx);
+    await tx.commit();
+    return result;
+  } catch (error) {
+    if (!tx.closed) {
+      try {
+        await tx.rollback();
+      } catch {
+        // Preserve the original failure.
+      }
+    }
+    throw error;
+  }
 }
 
-export function getAgent(id: string): AppAgent | null {
-  const row = getDb()
-    .prepare(`${agentSelect} WHERE a.id = ?`)
-    .get(id) as AgentRow | undefined;
+export async function listAgents(ownerId: string): Promise<AppAgent[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${agentSelect} WHERE a.owner_id = ? ORDER BY a.is_demo ASC, a.created_at DESC`,
+    args: [ownerId],
+  });
+  return (result.rows as unknown as AgentRow[]).map(rowToAgent);
+}
+
+export async function getAgent(
+  ownerId: string,
+  id: string,
+): Promise<AppAgent | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${agentSelect} WHERE a.owner_id = ? AND a.id = ?`,
+    args: [ownerId, id],
+  });
+  const row = result.rows[0] as unknown as AgentRow | undefined;
   return row ? rowToAgent(row) : null;
 }
 
-export function createAgent(input: AgentDraft): AppAgent {
+export async function createAgent(
+  ownerId: string,
+  input: AgentDraft,
+): Promise<AppAgent> {
   const draft = agentDraftSchema.parse(input);
-  const db = getDb();
-  const existing = db
-    .prepare("SELECT id FROM agents WHERE lower(smart_account) = lower(?)")
-    .get(draft.smartAccount) as { id: string } | undefined;
-  if (existing) {
+  const db = await getDb();
+  const existing = await db.execute({
+    sql: "SELECT id FROM agents WHERE owner_id = ? AND lower(smart_account) = lower(?)",
+    args: [ownerId, draft.smartAccount],
+  });
+  if (existing.rows.length > 0) {
     throw new AppError("An agent already uses this smart account.");
   }
+
   const now = new Date().toISOString();
   const id = randomUUID();
-  const insert = db.transaction(() => {
-    db.prepare(
-      "INSERT INTO agents (id, name, description, smart_account, is_demo, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)",
-    ).run(id, draft.name, draft.description, draft.smartAccount, now, now);
-    insertActivity({
+  await runInTransaction(async (tx) => {
+    await tx.execute({
+      sql: "INSERT INTO agents (id, owner_id, name, description, smart_account, is_demo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
+      args: [id, ownerId, draft.name, draft.description, draft.smartAccount, now, now],
+    });
+    await insertActivityWith(tx, {
+      ownerId,
       id: randomUUID(),
       agentId: id,
       kind: "agent.created",
@@ -286,72 +337,98 @@ export function createAgent(input: AgentDraft): AppAgent {
       createdAt: now,
     });
   });
-  insert();
-  const agent = getAgent(id);
+
+  const agent = await getAgent(ownerId, id);
   if (!agent) throw new AppError("The agent could not be created.");
   return agent;
 }
 
-export function listPolicies(agentId: string): AppPolicy[] {
-  const rows = getDb()
-    .prepare("SELECT * FROM policies WHERE agent_id = ? ORDER BY version DESC")
-    .all(agentId) as PolicyRow[];
-  return rows.map(rowToPolicy);
+export async function listPolicies(
+  ownerId: string,
+  agentId: string,
+): Promise<AppPolicy[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT p.* FROM policies p
+      JOIN agents a ON a.id = p.agent_id
+      WHERE a.owner_id = ? AND p.agent_id = ?
+      ORDER BY p.version DESC`,
+    args: [ownerId, agentId],
+  });
+  return (result.rows as unknown as PolicyRow[]).map(rowToPolicy);
 }
 
-export function getCurrentPolicy(agentId: string): AppPolicy | null {
-  const row = getDb()
-    .prepare(
-      "SELECT * FROM policies WHERE agent_id = ? ORDER BY version DESC LIMIT 1",
-    )
-    .get(agentId) as PolicyRow | undefined;
+export async function getCurrentPolicy(
+  ownerId: string,
+  agentId: string,
+): Promise<AppPolicy | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT p.* FROM policies p
+      JOIN agents a ON a.id = p.agent_id
+      WHERE a.owner_id = ? AND p.agent_id = ?
+      ORDER BY p.version DESC LIMIT 1`,
+    args: [ownerId, agentId],
+  });
+  const row = result.rows[0] as unknown as PolicyRow | undefined;
   return row ? rowToPolicy(row) : null;
 }
 
-export function getPolicy(id: string): AppPolicy | null {
-  const row = getDb()
-    .prepare("SELECT * FROM policies WHERE id = ?")
-    .get(id) as PolicyRow | undefined;
+export async function getPolicy(
+  ownerId: string,
+  id: string,
+): Promise<AppPolicy | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT p.* FROM policies p
+      JOIN agents a ON a.id = p.agent_id
+      WHERE a.owner_id = ? AND p.id = ?`,
+    args: [ownerId, id],
+  });
+  const row = result.rows[0] as unknown as PolicyRow | undefined;
   return row ? rowToPolicy(row) : null;
 }
 
-export function createPolicyVersion(
+export async function createPolicyVersion(
+  ownerId: string,
   agentId: string,
   input: PolicyDraft,
-): AppPolicy {
-  const agent = getAgent(agentId);
+): Promise<AppPolicy> {
+  const agent = await getAgent(ownerId, agentId);
   if (!agent) throw new AppError("Agent not found.");
   const draft = policyDraftSchema.parse(input);
-  const db = getDb();
-  const latest = db
-    .prepare(
-      "SELECT COALESCE(MAX(version), 0) AS version FROM policies WHERE agent_id = ?",
-    )
-    .get(agentId) as { version: number };
-  const version = latest.version + 1;
+  const db = await getDb();
+  const latest = await db.execute({
+    sql: "SELECT COALESCE(MAX(version), 0) AS version FROM policies WHERE owner_id = ? AND agent_id = ?",
+    args: [ownerId, agentId],
+  });
+  const version = Number(latest.rows[0]?.version ?? 0) + 1;
   const id = randomUUID();
   const createdAt = new Date().toISOString();
   const hash = computePolicyHash({ ...draft, version });
 
-  const insert = db.transaction(() => {
-    db.prepare(
-      "INSERT INTO policies (id, agent_id, version, name, chain_id, allowed_targets, allowed_methods, max_native_per_action_wei, max_native_per_day_wei, expires_at, notes, hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    ).run(
-      id,
-      agentId,
-      version,
-      draft.name,
-      draft.chainId,
-      JSON.stringify(draft.allowedTargets),
-      JSON.stringify(draft.allowedMethods),
-      draft.maxNativeValuePerActionWei,
-      draft.maxNativeValuePerDayWei,
-      draft.expiresAt,
-      draft.notes,
-      hash,
-      createdAt,
-    );
-    insertActivity({
+  await runInTransaction(async (tx) => {
+    await tx.execute({
+      sql: "INSERT INTO policies (id, owner_id, agent_id, version, name, chain_id, allowed_targets, allowed_methods, max_native_per_action_wei, max_native_per_day_wei, expires_at, notes, hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      args: [
+        id,
+        ownerId,
+        agentId,
+        version,
+        draft.name,
+        draft.chainId,
+        JSON.stringify(draft.allowedTargets),
+        JSON.stringify(draft.allowedMethods),
+        draft.maxNativeValuePerActionWei,
+        draft.maxNativeValuePerDayWei,
+        draft.expiresAt,
+        draft.notes,
+        hash,
+        createdAt,
+      ],
+    });
+    await insertActivityWith(tx, {
+      ownerId,
       id: randomUUID(),
       agentId,
       kind: "policy.published",
@@ -360,34 +437,51 @@ export function createPolicyVersion(
       createdAt,
     });
   });
-  insert();
-  const policy = getPolicy(id);
+
+  const policy = await getPolicy(ownerId, id);
   if (!policy) throw new AppError("The policy could not be created.");
   return policy;
 }
 
-export function listIntents(agentId: string): IntentRecord[] {
-  const rows = getDb()
-    .prepare("SELECT * FROM intents WHERE agent_id = ? ORDER BY created_at DESC")
-    .all(agentId) as IntentRow[];
-  return rows.map(rowToIntent);
+export async function listIntents(
+  ownerId: string,
+  agentId: string,
+): Promise<IntentRecord[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT i.* FROM intents i
+      JOIN agents a ON a.id = i.agent_id
+      WHERE a.owner_id = ? AND i.agent_id = ?
+      ORDER BY i.created_at DESC`,
+    args: [ownerId, agentId],
+  });
+  return (result.rows as unknown as IntentRow[]).map(rowToIntent);
 }
 
-export function getIntent(id: string): IntentRecord | null {
-  const row = getDb()
-    .prepare("SELECT * FROM intents WHERE id = ?")
-    .get(id) as IntentRow | undefined;
+export async function getIntent(
+  ownerId: string,
+  id: string,
+): Promise<IntentRecord | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT i.* FROM intents i
+      JOIN agents a ON a.id = i.agent_id
+      WHERE a.owner_id = ? AND i.id = ?`,
+    args: [ownerId, id],
+  });
+  const row = result.rows[0] as unknown as IntentRow | undefined;
   return row ? rowToIntent(row) : null;
 }
 
-export function createIntent(
+export async function createIntent(
+  ownerId: string,
   agentId: string,
   policyId: string,
   input: IntentDraft,
-): IntentRecord {
-  const agent = getAgent(agentId);
+): Promise<IntentRecord> {
+  const agent = await getAgent(ownerId, agentId);
   if (!agent) throw new AppError("Agent not found.");
-  const policy = getPolicy(policyId);
+  const policy = await getPolicy(ownerId, policyId);
   if (!policy || policy.agentId !== agentId) {
     throw new AppError("Choose a policy that belongs to this agent.");
   }
@@ -405,13 +499,13 @@ export function createIntent(
     createdAt,
   };
   const fingerprint = computeIntentFingerprint(base);
-  const insert = getDb().transaction(() => {
-    getDb()
-      .prepare(
-        "INSERT INTO intents (id, agent_id, policy_id, policy_version, policy_hash, chain_id, title, rationale, target, method_selector, value_wei, approved_by, fingerprint, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      )
-      .run(
+
+  await runInTransaction(async (tx) => {
+    await tx.execute({
+      sql: "INSERT INTO intents (id, owner_id, agent_id, policy_id, policy_version, policy_hash, chain_id, title, rationale, target, method_selector, value_wei, approved_by, fingerprint, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      args: [
         id,
+        ownerId,
         agentId,
         policyId,
         policy.version,
@@ -425,8 +519,10 @@ export function createIntent(
         base.approvedBy,
         fingerprint,
         createdAt,
-      );
-    insertActivity({
+      ],
+    });
+    await insertActivityWith(tx, {
+      ownerId,
       id: randomUUID(),
       agentId,
       kind: "intent.approved",
@@ -435,43 +531,31 @@ export function createIntent(
       createdAt,
     });
   });
-  insert();
-  const intent = getIntent(id);
+
+  const intent = await getIntent(ownerId, id);
   if (!intent) throw new AppError("The intent could not be approved.");
   return intent;
 }
 
-const evidenceSelect = `
-  SELECT
-    e.*,
-    a.name AS agent_name,
-    a.is_demo AS agent_is_demo,
-    a.smart_account AS agent_smart_account,
-    i.title AS intent_title
-  FROM evidence e
-  JOIN agents a ON a.id = e.agent_id
-  LEFT JOIN intents i ON i.id = e.intent_id
-`;
-
-export function listEvidence(options?: {
+export async function listEvidence(options: {
+  ownerId: string;
   agentId?: string;
   verdict?: string;
   limit?: number;
-}): AppEvidence[] {
-  const limit = Math.min(Math.max(options?.limit ?? 500, 1), 1000);
-  const rows = options?.agentId
-    ? (getDb()
-        .prepare(
-          `${evidenceSelect} WHERE e.agent_id = ? ORDER BY e.attached_at DESC LIMIT ?`,
-        )
-        .all(options.agentId, limit) as EvidenceRow[])
-    : (getDb()
-        .prepare(
-          `${evidenceSelect} ORDER BY e.attached_at DESC LIMIT ?`,
-        )
-        .all(limit) as EvidenceRow[]);
-  const evidence = rows.map(rowToEvidence);
-  if (options?.verdict) {
+}): Promise<AppEvidence[]> {
+  const limit = Math.min(Math.max(options.limit ?? 500, 1), 1000);
+  const db = await getDb();
+  const result = options.agentId
+    ? await db.execute({
+        sql: `${evidenceSelect} WHERE a.owner_id = ? AND e.agent_id = ? ORDER BY e.attached_at DESC LIMIT ?`,
+        args: [options.ownerId, options.agentId, limit],
+      })
+    : await db.execute({
+        sql: `${evidenceSelect} WHERE a.owner_id = ? ORDER BY e.attached_at DESC LIMIT ?`,
+        args: [options.ownerId, limit],
+      });
+  const evidence = (result.rows as unknown as EvidenceRow[]).map(rowToEvidence);
+  if (options.verdict) {
     return evidence.filter(
       (record) => record.evaluation.verdict === options.verdict,
     );
@@ -479,48 +563,65 @@ export function listEvidence(options?: {
   return evidence;
 }
 
-export function getEvidence(id: string): AppEvidence | null {
-  const row = getDb()
-    .prepare(`${evidenceSelect} WHERE e.id = ?`)
-    .get(id) as EvidenceRow | undefined;
+export async function getEvidence(
+  ownerId: string,
+  id: string,
+): Promise<AppEvidence | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${evidenceSelect} WHERE a.owner_id = ? AND e.id = ?`,
+    args: [ownerId, id],
+  });
+  const row = result.rows[0] as unknown as EvidenceRow | undefined;
   return row ? rowToEvidence(row) : null;
 }
 
-export function getEvidenceByHash(
+export async function getEvidenceByHash(
+  ownerId: string,
   agentId: string,
   kind: string,
   hash: string,
-): AppEvidence | null {
-  const row = getDb()
-    .prepare(
-      `${evidenceSelect} WHERE e.agent_id = ? AND e.kind = ? AND e.hash = ?`,
-    )
-    .get(agentId, kind, hash) as EvidenceRow | undefined;
+): Promise<AppEvidence | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${evidenceSelect} WHERE a.owner_id = ? AND e.agent_id = ? AND e.kind = ? AND e.hash = ?`,
+    args: [ownerId, agentId, kind, hash],
+  });
+  const row = result.rows[0] as unknown as EvidenceRow | undefined;
   return row ? rowToEvidence(row) : null;
 }
 
-export function listEvidenceForIntent(intentId: string): AppEvidence[] {
-  const rows = getDb()
-    .prepare(
-      `${evidenceSelect} WHERE e.intent_id = ? ORDER BY e.attached_at DESC`,
-    )
-    .all(intentId) as EvidenceRow[];
-  return rows.map(rowToEvidence);
+export async function listEvidenceForIntent(
+  ownerId: string,
+  intentId: string,
+): Promise<AppEvidence[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${evidenceSelect} WHERE a.owner_id = ? AND e.intent_id = ? ORDER BY e.attached_at DESC`,
+    args: [ownerId, intentId],
+  });
+  return (result.rows as unknown as EvidenceRow[]).map(rowToEvidence);
 }
 
-export function listEvidenceForPolicy(policyId: string): AppEvidence[] {
-  const rows = getDb()
-    .prepare(
-      `${evidenceSelect} WHERE e.policy_id = ? ORDER BY e.attached_at DESC`,
-    )
-    .all(policyId) as EvidenceRow[];
-  return rows.map(rowToEvidence);
+export async function listEvidenceForPolicy(
+  ownerId: string,
+  policyId: string,
+): Promise<AppEvidence[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${evidenceSelect} WHERE a.owner_id = ? AND e.policy_id = ? ORDER BY e.attached_at DESC`,
+    args: [ownerId, policyId],
+  });
+  return (result.rows as unknown as EvidenceRow[]).map(rowToEvidence);
 }
 
-export function insertEvidence(record: EvidenceRecord): void {
+export async function insertEvidence(
+  ownerId: string,
+  record: EvidenceRecord,
+): Promise<void> {
   const parsed = evidenceRecordSchema.parse(record);
-  const db = getDb();
-  const existing = getEvidenceByHash(
+  const existing = await getEvidenceByHash(
+    ownerId,
     parsed.agentId,
     parsed.kind,
     parsed.hash,
@@ -528,27 +629,41 @@ export function insertEvidence(record: EvidenceRecord): void {
   if (existing) {
     throw new AppError("This evidence is already attached to the agent.");
   }
-  const agent = getAgent(parsed.agentId);
+  const agent = await getAgent(ownerId, parsed.agentId);
   if (!agent) throw new AppError("Agent not found.");
-  const insert = db.transaction(() => {
-    db.prepare(
-      "INSERT INTO evidence (id, agent_id, intent_id, policy_id, policy_version, policy_hash, kind, hash, source, observed_json, evaluation_json, attached_at, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    ).run(
-      parsed.id,
-      parsed.agentId,
-      parsed.intentId,
-      parsed.policyId,
-      parsed.policyVersion,
-      parsed.policyHash,
-      parsed.kind,
-      parsed.hash,
-      parsed.source,
-      JSON.stringify(parsed.observed),
-      JSON.stringify(parsed.evaluation),
-      parsed.attachedAt,
-      parsed.fetchedAt,
-    );
-    insertActivity({
+  const policy = await getPolicy(ownerId, parsed.policyId);
+  if (!policy || policy.agentId !== parsed.agentId) {
+    throw new AppError("The evidence policy does not belong to this agent.");
+  }
+  if (parsed.intentId) {
+    const intent = await getIntent(ownerId, parsed.intentId);
+    if (!intent || intent.agentId !== parsed.agentId) {
+      throw new AppError("The evidence intent does not belong to this agent.");
+    }
+  }
+
+  await runInTransaction(async (tx) => {
+    await tx.execute({
+      sql: "INSERT INTO evidence (id, owner_id, agent_id, intent_id, policy_id, policy_version, policy_hash, kind, hash, source, observed_json, evaluation_json, attached_at, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      args: [
+        parsed.id,
+        ownerId,
+        parsed.agentId,
+        parsed.intentId,
+        parsed.policyId,
+        parsed.policyVersion,
+        parsed.policyHash,
+        parsed.kind,
+        parsed.hash,
+        parsed.source,
+        JSON.stringify(parsed.observed),
+        JSON.stringify(parsed.evaluation),
+        parsed.attachedAt,
+        parsed.fetchedAt,
+      ],
+    });
+    await insertActivityWith(tx, {
+      ownerId,
       id: randomUUID(),
       agentId: parsed.agentId,
       kind: "evidence.attached",
@@ -563,27 +678,30 @@ export function insertEvidence(record: EvidenceRecord): void {
       createdAt: new Date().toISOString(),
     });
   });
-  insert();
 }
 
-export function priorNativeValueInUtcDay(
+export async function priorNativeValueInUtcDay(
+  ownerId: string,
   agentId: string,
   at: Date,
-): string {
+): Promise<string> {
   const start = new Date(
     Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()),
   );
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-  const rows = getDb()
-    .prepare(
-      "SELECT observed_json FROM evidence WHERE agent_id = ? AND source = 'live' AND attached_at >= ? AND attached_at < ?",
-    )
-    .all(agentId, start.toISOString(), end.toISOString()) as Array<{
-    observed_json: string;
-  }>;
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT e.observed_json FROM evidence e
+      JOIN agents a ON a.id = e.agent_id
+      WHERE a.owner_id = ? AND e.agent_id = ? AND e.source = 'live'
+        AND e.attached_at >= ? AND e.attached_at < ?`,
+    args: [ownerId, agentId, start.toISOString(), end.toISOString()],
+  });
   let total = 0n;
-  for (const row of rows) {
-    const parsed = observedActionSchema.safeParse(parseJson(row.observed_json));
+  for (const row of result.rows) {
+    const parsed = observedActionSchema.safeParse(
+      parseJson(String(row.observed_json)),
+    );
     if (!parsed.success) continue;
     if (parsed.data.chainStatus !== "success") continue;
     if (parsed.data.valueWei === null) continue;
@@ -592,9 +710,11 @@ export function priorNativeValueInUtcDay(
   return total.toString();
 }
 
-export function getLedgerSummary(): LedgerSummary {
-  const agents = listAgents();
-  const evidence = listEvidence({ limit: 1000 });
+export async function getLedgerSummary(
+  ownerId: string,
+): Promise<LedgerSummary> {
+  const agents = await listAgents(ownerId);
+  const evidence = await listEvidence({ ownerId, limit: 1000 });
   const verdictCounts = {
     matched: 0,
     out_of_policy: 0,
@@ -618,68 +738,89 @@ export function getLedgerSummary(): LedgerSummary {
   };
 }
 
-export function listAttentionEvidence(limit = 6): AppEvidence[] {
-  return listEvidence({ limit: 1000 })
-    .filter((record) =>
-      attentionVerdicts.includes(record.evaluation.verdict),
-    )
+export async function listAttentionEvidence(
+  ownerId: string,
+  limit = 6,
+): Promise<AppEvidence[]> {
+  return (await listEvidence({ ownerId, limit: 1000 }))
+    .filter((record) => attentionVerdicts.includes(record.evaluation.verdict))
     .slice(0, limit);
 }
 
-export function insertActivity(input: {
+async function insertActivityWith(
+  db: Queryable,
+  input: {
+    ownerId: string;
+    id: string;
+    agentId: string | null;
+    kind: string;
+    summary: string;
+    detail: Record<string, unknown>;
+    createdAt: string;
+  },
+): Promise<void> {
+  await db.execute({
+    sql: "INSERT INTO activity (id, owner_id, agent_id, kind, summary, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    args: [
+      input.id,
+      input.ownerId,
+      input.agentId,
+      input.kind,
+      input.summary.slice(0, 400),
+      JSON.stringify(input.detail).slice(0, 4000),
+      input.createdAt,
+    ],
+  });
+}
+
+export async function insertActivity(input: {
+  ownerId: string;
   id: string;
   agentId: string | null;
   kind: string;
   summary: string;
   detail: Record<string, unknown>;
   createdAt: string;
-}): void {
-  getDb()
-    .prepare(
-      "INSERT INTO activity (id, agent_id, kind, summary, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    )
-    .run(
-      input.id,
-      input.agentId,
-      input.kind,
-      input.summary.slice(0, 400),
-      JSON.stringify(input.detail).slice(0, 4000),
-      input.createdAt,
-    );
+}): Promise<void> {
+  const db = await getDb();
+  await insertActivityWith(db, input);
 }
 
-export function listActivity(
-  options?: { agentId?: string; limit?: number },
-): ActivityItem[] {
-  const limit = Math.min(Math.max(options?.limit ?? 60, 1), 200);
-  const rows = options?.agentId
-    ? (getDb()
-        .prepare(
-          "SELECT act.*, a.name AS agent_name, a.is_demo AS agent_is_demo FROM activity act LEFT JOIN agents a ON a.id = act.agent_id WHERE act.agent_id = ? ORDER BY act.created_at DESC LIMIT ?",
-        )
-        .all(options.agentId, limit) as Array<{
-        id: string;
-        agent_id: string | null;
-        kind: string;
-        summary: string;
-        created_at: string;
-        agent_name: string | null;
-        agent_is_demo: number | null;
-      }>)
-    : (getDb()
-        .prepare(
-          "SELECT act.*, a.name AS agent_name, a.is_demo AS agent_is_demo FROM activity act LEFT JOIN agents a ON a.id = act.agent_id ORDER BY act.created_at DESC LIMIT ?",
-        )
-        .all(limit) as Array<{
-        id: string;
-        agent_id: string | null;
-        kind: string;
-        summary: string;
-        created_at: string;
-        agent_name: string | null;
-        agent_is_demo: number | null;
-      }>);
-  return rows.map((row) => ({
+export async function listActivity(options: {
+  ownerId: string;
+  agentId?: string;
+  limit?: number;
+}): Promise<ActivityItem[]> {
+  const limit = Math.min(Math.max(options.limit ?? 60, 1), 200);
+  const db = await getDb();
+  const result = options.agentId
+    ? await db.execute({
+        sql: `SELECT act.*, a.name AS agent_name, a.is_demo AS agent_is_demo
+          FROM activity act
+          LEFT JOIN agents a ON a.id = act.agent_id AND a.owner_id = act.owner_id
+          WHERE act.owner_id = ? AND act.agent_id = ?
+          ORDER BY act.created_at DESC LIMIT ?`,
+        args: [options.ownerId, options.agentId, limit],
+      })
+    : await db.execute({
+        sql: `SELECT act.*, a.name AS agent_name, a.is_demo AS agent_is_demo
+          FROM activity act
+          LEFT JOIN agents a ON a.id = act.agent_id AND a.owner_id = act.owner_id
+          WHERE act.owner_id = ?
+          ORDER BY act.created_at DESC LIMIT ?`,
+        args: [options.ownerId, limit],
+      });
+  return (
+    result.rows as unknown as Array<{
+      id: string;
+      agent_id: string | null;
+      kind: string;
+      summary: string;
+      created_at: string;
+      agent_name: string | null;
+      agent_is_demo: number | null;
+    }>
+  ).map((row) => ({
     id: row.id,
     agentId: row.agent_id,
     agentName: row.agent_name,

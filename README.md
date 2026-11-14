@@ -1,6 +1,6 @@
 # Mandate
 
-Mandate is a read-only evidence ledger for agent actions on **BOT Chain** — mainnet (chain ID 677) or Bohr testnet (chain ID 968). It records the action a human approved, the policy version that applied, and the public transaction or ERC-4337 UserOperation that actually happened. It then shows where the record matches, where it does not, and what evidence is missing.
+Mandate is a read-only, multi-user evidence ledger for agent actions on **BOT Chain** — mainnet (chain ID 677) or Bohr testnet (chain ID 968). Each signed-in account gets a private workspace that records the action a human approved, the policy version that applied, and the public transaction or ERC-4337 UserOperation that actually happened. It then shows where the record matches, where it does not, and what evidence is missing.
 
 Mandate does not hold funds, sign messages, submit UserOperations, or enforce policy on-chain. An optional anchor registry records policy, intent, and report hashes on BOT Chain; the app only reads those anchors.
 
@@ -16,29 +16,77 @@ npm run dev
 
 Open `http://localhost:3000` for the product overview and `http://localhost:3000/app` for the workspace.
 
-The database is created automatically at `data/mandate.db`. On first run, Mandate seeds a clearly labelled sample workspace. Set `MANDATE_SEED_DEMO=false` before the first start for an empty ledger.
+With a local database and no GitHub credentials, Mandate runs in local owner mode. The workspace belongs to the built-in `local` owner and the database is created automatically at `data/mandate.db`. On the first workspace visit, Mandate seeds clearly labelled sample records for that account. Set `MANDATE_SEED_DEMO=false` before the first start for an empty workspace.
 
 To reset local data, stop the server and remove `data/mandate.db`, `data/mandate.db-wal`, and `data/mandate.db-shm`.
 
-## Vercel deployment
+To exercise GitHub sign-in locally, create a GitHub OAuth app whose callback URL is `http://localhost:3000/api/auth/github/callback`, then add `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and a random `MANDATE_AUTH_SECRET` of at least 32 characters to `apps/web/.env.local`. Do not set `MANDATE_AUTH_MODE=github` when using a hosted database unless all three values are present.
 
-1. Import `zynorr/Mandate` from GitHub.
-2. Leave the Vercel Root Directory at the repository root.
-3. Vercel will read `vercel.json`, which uses the Next.js preset, `npm install`, `npm run build --workspace @mandate/web`, and output directory `apps/web/.next`.
-4. No environment variables are required by default. On Vercel the app uses `/tmp/mandate.db`; it is ephemeral and resets when a function instance is recycled.
-5. Set `MANDATE_DATABASE_PATH=/tmp/mandate.db` only if you want to override that path.
+## Accounts and workspace isolation
+
+- GitHub OAuth identifies the account. The app requests only the `read:user` scope and does not read repositories.
+- The owner key is the immutable GitHub numeric ID (`github:<id>`), so changing a GitHub username does not move or expose a workspace.
+- Agents, policies, intents, evidence, and activity all carry an `owner_id`. Every repository query and API route is scoped to the signed-in owner.
+- The workspace layout requires a session. Report and discovery API routes return `401` when no valid session is present; other accounts' records return `404` rather than leaking their existence.
+- Sessions are signed, HttpOnly JWTs in the `mandate_session` cookie (HS256, 30-day expiry, `SameSite=Lax`, `Secure` on HTTPS). `MANDATE_AUTH_SECRET` signs them.
+- New accounts receive a labelled sample workspace on first use unless `MANDATE_SEED_DEMO=false`, or unless the account already has agents.
+- Each account has a separate ledger. Invitations, teams, roles, and shared workspaces are not implemented yet.
+
+The hosted deployment fails closed. A remote or Vercel database requires `MANDATE_DATABASE_URL`, and GitHub OAuth requires `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `MANDATE_AUTH_SECRET`. Local auth mode is rejected when the database is remote.
+
+## Hosted deployment (Turso + GitHub OAuth)
+
+Use a Turso/libSQL database for the hosted app. The serverless filesystem is ephemeral, so a local SQLite path is not durable on Vercel.
+
+1. Create a Turso database and token:
+
+   ```powershell
+   turso db create mandate
+   turso db show mandate --url
+   turso db tokens create mandate
+   ```
+
+2. Create a GitHub OAuth app. Set the callback URL to `https://<your-domain>/api/auth/github/callback`. The app requests only `read:user`.
+
+3. Configure the Vercel project:
+
+   ```text
+   MANDATE_DATABASE_URL=libsql://<database>-<org>.turso.io
+   MANDATE_DATABASE_AUTH_TOKEN=<turso-token>
+   GITHUB_CLIENT_ID=<github-client-id>
+   GITHUB_CLIENT_SECRET=<github-client-secret>
+   MANDATE_AUTH_SECRET=<at-least-32-random-characters>
+   MANDATE_PUBLIC_URL=https://<your-domain>
+   BOT_CHAIN_ID=677
+   MANDATE_ANCHOR_REGISTRY_ADDRESS=0xc69367d69b12bc14397773d11ad462f2f1d7aeb4
+   MANDATE_SEED_DEMO=false
+   ```
+
+   Generate the auth secret with:
+
+   ```powershell
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+4. Import `zynorr/Mandate` from GitHub. Leave the Vercel Root Directory at the repository root. `vercel.json` runs `npm install`, builds `@mandate/web`, and publishes `apps/web/.next`.
+
+5. Deploy. The schema is created or migrated automatically on the first database connection. Missing hosted database or OAuth configuration stops the app instead of falling back to a shared public workspace.
+
+6. Smoke-test the deployment: open `/signin`, complete GitHub sign-in, confirm `/app` loads only that account's records, export a report, and confirm a signed-out request to `/api/reports/<agentId>` returns `401`.
+
+`MANDATE_PUBLIC_URL` must be the canonical HTTPS origin. It is used to build the GitHub callback URL and decide whether the session cookie is marked `Secure`. If it is omitted or not HTTPS on a hosted deployment, sign-in configuration is treated as invalid.
 
 ## Mainnet deployment
 
-The app supports BOT Chain mainnet (chain ID 677) and Bohr testnet (chain ID 968). `BOT_CHAIN_ID` selects the network and any other chain ID is rejected at startup. RPC, Bundler, explorer, and EntryPoint defaults follow the selected network, so mainnet only needs the following environment:
+The app supports BOT Chain mainnet (chain ID 677) and Bohr testnet (chain ID 968). `BOT_CHAIN_ID` selects the network and any other chain ID is rejected at startup. The default and the value shipped in `.env.example` is mainnet 677. RPC, Bundler, explorer, and EntryPoint defaults follow the selected network, so mainnet only needs the following environment:
 
-```
+```text
 BOT_CHAIN_ID=677
 MANDATE_ANCHOR_REGISTRY_ADDRESS=0xc69367d69b12bc14397773d11ad462f2f1d7aeb4
 MANDATE_SEED_DEMO=false
 ```
 
-Set `MANDATE_SEED_DEMO=false` for a clean ledger. Sample records are illustrative; they are not mainnet evidence. On Vercel the SQLite file is still ephemeral, so a durable mainnet workspace needs `MANDATE_DATABASE_PATH` pointed at persistent storage or a local deployment.
+A hosted mainnet workspace additionally needs the Turso and GitHub OAuth variables from the hosted deployment section. Sample records are illustrative, not mainnet evidence. Mainnet anchors are permanent; do not delete or overwrite them.
 
 Mainnet contract operations use the same scripts with an explicit confirmation guard:
 
@@ -57,6 +105,28 @@ Remove-Item Env:BOT_CHAIN_ID, Env:DEPLOY_CONFIRM_MAINNET
 ```
 
 Without `DEPLOY_CONFIRM_MAINNET=1`, the deploy and anchor scripts refuse to send a mainnet transaction. Use a dedicated deploy key that holds only gas funds.
+
+## Migrating an existing local workspace
+
+Before the first multi-user start, stop the dev server and keep a copy of the database:
+
+```powershell
+New-Item -ItemType Directory -Force .e2e\backups | Out-Null
+Copy-Item data\mandate.db ".e2e\backups\mandate-pre-multiuser-$(Get-Date -Format yyyyMMddHHmmss).db"
+```
+
+Starting the updated app once migrates the local database automatically:
+
+- adds `owner_id` to agents, policies, intents, evidence, and activity;
+- assigns existing rows to the built-in `local` owner;
+- replaces global smart-account uniqueness with per-owner `(owner_id, lower(smart_account))` uniqueness;
+- sets `PRAGMA user_version = 2`.
+
+After migration, local development opens the same records under the `local` owner. Hosted GitHub accounts start with their own separate workspace. Verify the result with:
+
+```powershell
+node -e "const {createClient}=require('@libsql/client');(async()=>{const c=createClient({url:'file:///C:/path/to/Mandate/data/mandate.db'});for(const t of ['agents','policies','intents','evidence','activity']){const r=await c.execute('SELECT owner_id, COUNT(*) AS n FROM '+t+' GROUP BY owner_id');console.log(t,r.rows)}const fk=await c.execute('PRAGMA foreign_key_check');console.log('foreign_key_check',fk.rows.length);c.close()})()"
+```
 
 ## Scripts
 
@@ -85,20 +155,21 @@ Remove-Item Env:LIVE_BOT_TESTNET
 
 ## Workflow
 
-1. Register a BOT Chain testnet smart account as an agent.
-2. Publish an immutable policy version for that agent.
-3. Approve one specific intent against that policy snapshot.
-4. Attach a public transaction or UserOperation, or discover recent activity through BOT Scan.
-5. Review the split verdict, comparison rows, coverage notes, and exported report.
-6. Optionally verify a policy hash, intent fingerprint, or report fingerprint against the anchor registry.
+1. Sign in with GitHub, or use the local owner in local development.
+2. Register a BOT Chain smart account as an agent in your workspace.
+3. Publish an immutable policy version for that agent.
+4. Approve one specific intent against that policy snapshot.
+5. Attach a public transaction or UserOperation, or discover recent activity through BOT Scan.
+6. Review the split verdict, comparison rows, coverage notes, and exported report.
+7. Optionally verify a policy hash, intent fingerprint, or report fingerprint against the anchor registry.
 
 Evidence verdicts are `matched`, `out_of_policy`, `failed`, `unattributed`, `needs_review`, and `pending`. A successful transaction can still be out of policy. A record without a linked intent remains unattributed.
 
 Policies compare the sender, target, method selector, native value, per-action and per-UTC-day caps, expiry, and chain ID. Token movements are shown for context but are not evaluated by the policy.
 
-## Live sample
+## Live testnet sample
 
-The test suite contains a verified BOT Chain testnet sample. To exercise live attachment manually, register an agent with smart account `0xa682DB3Da0F37853CaB81F7aC538E067F72CF252`, approve a target of `0x402085c248EeA27D92E8b30b2C58ed07f9E20001` with method selector `0x13cd3b53`, then attach UserOperation `0xcab1d7788d6c6109c769700f29c338fae29dec0e8ecf7b28514a8b61681fc41e`.
+The test suite contains a verified BOT Chain testnet sample. To exercise live attachment manually, set `BOT_CHAIN_ID=968` and the testnet RPC/explorer/bundler overrides from `.env.example`, register an agent with smart account `0xa682DB3Da0F37853CaB81F7aC538E067F72CF252`, approve a target of `0x402085c248EeA27D92E8b30b2C58ed07f9E20001` with method selector `0x13cd3b53`, then attach UserOperation `0xcab1d7788d6c6109c769700f29c338fae29dec0e8ecf7b28514a8b61681fc41e`.
 
 ## Mainnet E2E run
 
@@ -106,8 +177,9 @@ The 2026-11-14 BOT Chain mainnet run is documented in
 [`docs/mainnet-e2e.md`](docs/mainnet-e2e.md). It covers registry edge cases,
 native-transfer policy verdicts (matched, daily cap, per-action cap, and wrong
 target), a rejected sender mismatch, and the on-chain anchor transaction for
-the policy, intent, and report fingerprints. The same records are available in
-the workspace Evidence, Activity, and agent pages.
+the policy, intent, and report fingerprints. The imported records belong to the
+local workspace owner and remain available in local development under the
+Evidence, Activity, and agent pages.
 
 ## Anchor registry
 
@@ -148,7 +220,7 @@ npm run contracts:anchor -- --kind intent --hash 0x...
 npm run contracts:anchor -- --kind report --hash 0x...
 ```
 
-The sample workspace policy hash and all three sample intent fingerprints are anchored. Open `http://localhost:3000/app/anchors` to verify them. The pitch deck PDF is also anchored as a report; its hash and transaction are recorded in `docs/pitch/README.md`. Run anchor commands one at a time; each invocation reads the next nonce from the RPC.
+The mainnet registry contains the policy, intent, and report anchors from the documented mainnet E2E run. The older sample workspace hashes were anchored on the testnet registry: set `BOT_CHAIN_ID=968` and `MANDATE_ANCHOR_REGISTRY_ADDRESS=0xe923e156570961283198faad9e59744b49d1e523` to check them. Per-account sample records created for hosted accounts are illustrative and are not pre-anchored. The pitch deck PDF is anchored as a report; its hash and transaction are recorded in `docs/pitch/README.md`. Run anchor commands one at a time; each invocation reads the next nonce from the RPC.
 
 ## Pitch deck
 
@@ -156,24 +228,28 @@ The sample workspace policy hash and all three sample intent fingerprints are an
 
 ## Architecture
 
-- `apps/web` contains the Next.js App Router UI, server actions, SQLite repository, discovery, source-health checks, anchor lookups, and report API.
+- `apps/web` contains the Next.js App Router UI, server actions, GitHub OAuth and session handling, the owner-scoped libSQL repository, discovery, source-health checks, anchor lookups, and the report API.
 - `packages/chain` contains the domain schemas, hashing, policy evaluation, BOT Scan/Bundler/RPC clients, decoding, evidence reconstruction, anchor reads, and report generation.
 - `contracts` contains the optional `MandateAnchorRegistry` contract and its compile, deploy, and anchor scripts.
 - `data` contains local SQLite runtime storage and is ignored by git.
+- `.e2e` contains git-ignored E2E artifacts, wallet files, and database backups. Never commit private keys.
 
 Useful API routes:
 
-- `GET /api/health` checks RPC, Bundler, and BOT Scan.
-- `GET /api/discovery?agentId=...` lists public activity for an agent.
-- `GET /api/reports/{agentId}?format=json|md&download=1` exports an evidence report.
+- `GET /api/health` checks RPC, Bundler, and BOT Scan. It does not require a session.
+- `GET /api/discovery?agentId=...` lists public activity for an agent owned by the signed-in account. Returns `401` without a session.
+- `GET /api/reports/{agentId}?format=json|md&download=1` exports an evidence report for an owned agent. Returns `401` without a session.
+- `GET /api/auth/github/start`, `GET /api/auth/github/callback`, and `POST /api/auth/signout` implement GitHub sign-in and sign-out.
 
-## Boundaries and limitations
+## Security model and limitations
 
-- The app supports BOT Chain mainnet (677) and Bohr testnet (968); testnet remains the default. Confirm all configured RPC, explorer, Bundler, EntryPoint, and persistent database settings before operating the app on mainnet.
-- No wallet connection, authentication, custody, signing, UserOperation submission, EIP-7702 delegation, or paymaster flow.
+- Authentication is GitHub identity, not wallet ownership. No wallet connection, custody, signing, UserOperation submission, EIP-7702 delegation, or paymaster flow is implemented.
+- Tenant isolation is enforced in application queries by `owner_id`. The database is shared, so anyone with database credentials can read all accounts' records.
+- Sessions are stateless. Signing out clears the cookie, but an already-issued token remains valid until its 30-day expiry unless `MANDATE_AUTH_SECRET` is rotated, which invalidates every session.
+- There are no team invitations, roles, per-account rate limits, or abuse controls yet. Treat this as a pilot release, not an audited multi-tenant security boundary.
 - No on-chain enforcement. Policies are local review rules. The anchor registry records hashes only; it does not enforce policy, custody funds, or prove authorship.
 - Public explorer data may be incomplete. Inner-call decoding and token amounts are not guaranteed. The UI and reports keep those gaps visible.
-- The workspace is designed for local single-operator use. Do not expose it directly to the public internet without adding authentication and database access controls.
+- Hosted deployments must use a durable remote database. Local SQLite mode is for development only and must not be exposed publicly.
 - The public research note and its Conform limitation are documented in `docs/ui-research.md`.
 
 ## Verification
@@ -183,4 +259,4 @@ npm run check
 npm run build
 ```
 
-The current suite has 19 passing unit tests and one opt-in live test. Production smoke coverage includes the marketing page, workspace pages, agent/policy/intent/evidence flows, anchor lookup, source health, report exports, and a live sample UserOperation attachment.
+The suite includes chain unit tests and one opt-in live test. Production smoke coverage includes the marketing page, sign-in gating, owner-scoped workspace pages, agent/policy/intent/evidence flows, anchor lookup, source health, report exports, and a live sample UserOperation attachment.

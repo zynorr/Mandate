@@ -146,7 +146,7 @@ export default function HomePage() {
                   </div>
                   <div className="record-foot">
                     <span>Intent fingerprint 0x91c2…7af4</span>
-                    <span>Stored locally</span>
+                    <span>Private workspace</span>
                   </div>
                   <div className="record-stamp">
                     Evidence
@@ -159,8 +159,8 @@ export default function HomePage() {
 
             <div className="trust-strip" aria-label="Product boundaries">
               <div className="trust-item">
-                <strong>Read-only app</strong>
-                No keys, signing, or UserOperation submission.
+                <strong>Account-scoped workspace</strong>
+                GitHub sign-in keeps each ledger private. No keys or signing.
               </div>
               <div className="trust-item">
                 <strong>Specific approvals</strong>
@@ -415,11 +415,11 @@ export default function HomePage() {
           <div className="shell">
             <div className="cta-inner">
               <div>
-                <p className="eyebrow">Sample workspace</p>
+                <p className="eyebrow">Private workspace</p>
                 <h2>See the review trail for yourself.</h2>
                 <p>
-                  Explore the sample workspace or register a {network} smart
-                  account. Every sample record is labeled.
+                  Sign in to get your own workspace, then explore the labeled
+                  sample records or register a {network} smart account.
                 </p>
               </div>
               <div className="cta-actions">
@@ -462,7 +462,7 @@ export default function HomePage() {
               </div>
               <div className="trust-item">
                 <strong>Data</strong>
-                Stored on this machine
+                Private per signed-in account
               </div>
               <div className="trust-item">
                 <strong>Boundary</strong>

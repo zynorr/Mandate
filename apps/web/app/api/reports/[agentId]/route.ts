@@ -2,6 +2,7 @@ import {
   buildEvidenceReport,
   renderEvidenceReportMarkdown,
 } from "@mandate/chain";
+import { getSessionUser } from "@/lib/auth";
 import {
   getAgent,
   listEvidence,
@@ -25,8 +26,22 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ agentId: string }> },
 ) {
+  const user = await getSessionUser();
+  if (!user) {
+    return Response.json(
+      { error: "Sign in to access this report." },
+      {
+        status: 401,
+        headers: {
+          "cache-control": "no-store",
+          "www-authenticate": "GitHub",
+        },
+      },
+    );
+  }
+
   const { agentId } = await context.params;
-  const agent = getAgent(agentId);
+  const agent = await getAgent(user.ownerId, agentId);
   if (!agent) {
     return Response.json(
       { error: "Agent not found." },
@@ -39,9 +54,13 @@ export async function GET(
   const download = url.searchParams.get("download") === "1";
   const report = buildEvidenceReport({
     agent,
-    policies: listPolicies(agent.id),
-    intents: listIntents(agent.id),
-    evidence: listEvidence({ agentId: agent.id, limit: 1000 }),
+    policies: await listPolicies(user.ownerId, agent.id),
+    intents: await listIntents(user.ownerId, agent.id),
+    evidence: await listEvidence({
+      ownerId: user.ownerId,
+      agentId: agent.id,
+      limit: 1000,
+    }),
   });
   const filename = `mandate-${safeFilename(agent.name, agent.id)}-${
     report.generatedAt.slice(0, 10)

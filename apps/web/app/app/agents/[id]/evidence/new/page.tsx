@@ -12,6 +12,7 @@ import { AttachEvidenceForm } from "@/components/forms";
 import { ArrowRightIcon, SearchIcon } from "@/components/icons";
 import { Note, PageHeader } from "@/components/ui";
 import { attachEvidenceAction } from "@/lib/actions";
+import { requireUser } from "@/lib/auth";
 import { getAppConfig } from "@/lib/config";
 import { getAgent, getCurrentPolicy, listIntents } from "@/lib/repo";
 
@@ -26,15 +27,16 @@ export default async function AttachEvidencePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ kind?: string; hash?: string; intentId?: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
   const query = await searchParams;
   const config = getAppConfig();
   const network = networkLabel(config.chainId);
-  const agent = getAgent(id);
+  const agent = await getAgent(user.ownerId, id);
   if (!agent) notFound();
 
-  const policy = getCurrentPolicy(agent.id);
-  const intents = listIntents(agent.id);
+  const policy = await getCurrentPolicy(user.ownerId, agent.id);
+  const intents = await listIntents(user.ownerId, agent.id);
   const selectedIntent = intents.find((intent) => intent.id === query.intentId);
   const kind =
     query.kind === "transaction" || query.kind === "user_operation"

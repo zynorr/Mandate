@@ -23,6 +23,7 @@ import {
   VerdictBadge,
 } from "@/components/ui";
 import { evidenceKindLabel } from "@/lib/labels";
+import { requireUser } from "@/lib/auth";
 import { getAgent, getEvidence, getIntent, getPolicy } from "@/lib/repo";
 
 const stateLabel: Record<CheckState, string> = {
@@ -109,15 +110,18 @@ export default async function EvidenceDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ attached?: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
   const query = await searchParams;
-  const record = getEvidence(id);
+  const record = await getEvidence(user.ownerId, id);
   if (!record) notFound();
 
-  const agent = getAgent(record.agentId);
+  const agent = await getAgent(user.ownerId, record.agentId);
   if (!agent) notFound();
-  const intent = record.intentId ? getIntent(record.intentId) : null;
-  const policy = getPolicy(record.policyId);
+  const intent = record.intentId
+    ? await getIntent(user.ownerId, record.intentId)
+    : null;
+  const policy = await getPolicy(user.ownerId, record.policyId);
 
   return (
     <>

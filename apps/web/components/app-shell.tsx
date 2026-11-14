@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getAppConfig } from "@/lib/config";
+import type { SessionUser } from "@/lib/auth";
 import { networkLabel } from "@mandate/chain";
 import { AppNav } from "./app-nav";
 import { SiteFooter, Wordmark } from "./brand";
+import { UserBadge } from "./user-badge";
 
 const shellAgents = (agents: Array<{ id: string; name: string; isDemo: boolean }>) =>
   agents.map((agent) => ({
@@ -14,9 +16,11 @@ const shellAgents = (agents: Array<{ id: string; name: string; isDemo: boolean }
 
 export function AppShell({
   agents,
+  user,
   children,
 }: {
   agents: Array<{ id: string; name: string; isDemo: boolean }>;
+  user: SessionUser;
   children: ReactNode;
 }) {
   const config = getAppConfig();
@@ -35,6 +39,7 @@ export function AppShell({
         </div>
         <AppNav agents={shellAgents(agents)} />
         <div className="app-sidebar-foot">
+          <UserBadge user={user} />
           <p className="sidebar-kicker">Read-only chain access</p>
           <p>
             Mandate never holds keys, signs transactions, or submits
@@ -48,10 +53,13 @@ export function AppShell({
           <Link href="/" aria-label="Mandate home">
             <Wordmark compact />
           </Link>
-          <span className="environment-pill">
-            <span className="environment-dot" aria-hidden="true" />
-            {config.chainId}
-          </span>
+          <div className="app-mobile-account">
+            <span className="environment-pill">
+              <span className="environment-dot" aria-hidden="true" />
+              {config.chainId}
+            </span>
+            <UserBadge user={user} compact />
+          </div>
         </header>
         <div className="app-mobile-nav">
           <AppNav agents={shellAgents(agents)} />

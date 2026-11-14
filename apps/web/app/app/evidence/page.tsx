@@ -3,6 +3,7 @@ import type { EvidenceVerdict } from "@mandate/chain";
 import { EvidenceTable } from "@/components/evidence-table";
 import { ArrowRightIcon, DownloadIcon, SearchIcon } from "@/components/icons";
 import { Note, PageHeader } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
 import { listAgents, listEvidence } from "@/lib/repo";
 
 const verdictOptions: Array<{ value: EvidenceVerdict; label: string }> = [
@@ -27,9 +28,13 @@ export default async function EvidencePage({
     q?: string;
   }>;
 }) {
+  const user = await requireUser();
   const query = await searchParams;
-  const agents = listAgents();
-  const allEvidence = listEvidence({ limit: 1000 });
+  const agents = await listAgents(user.ownerId);
+  const allEvidence = await listEvidence({
+    ownerId: user.ownerId,
+    limit: 1000,
+  });
   const selectedAgent = agents.find((agent) => agent.id === query.agent);
   const verdict = isVerdict(query.verdict) ? query.verdict : undefined;
   const source =

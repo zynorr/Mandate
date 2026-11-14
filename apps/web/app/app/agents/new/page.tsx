@@ -4,13 +4,15 @@ import { ArrowRightIcon } from "@/components/icons";
 import { AgentForm } from "@/components/forms";
 import { PageHeader } from "@/components/ui";
 import { createAgentAction } from "@/lib/actions";
+import { requireUser } from "@/lib/auth";
 import { getAppConfig } from "@/lib/config";
 
 export const metadata = {
   title: "Register agent",
 };
 
-export default function NewAgentPage() {
+export default async function NewAgentPage() {
+  await requireUser();
   const config = getAppConfig();
   return (
     <>

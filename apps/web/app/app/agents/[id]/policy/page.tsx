@@ -17,6 +17,7 @@ import {
   SectionHeading,
 } from "@/components/ui";
 import { createPolicyAction } from "@/lib/actions";
+import { requireUser } from "@/lib/auth";
 import { getAgent, listPolicies } from "@/lib/repo";
 
 const botAmount = (wei: string | null): string | undefined => {
@@ -31,13 +32,14 @@ export default async function PolicyPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ published?: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
   const query = await searchParams;
   const network = networkLabel(getAppConfig().chainId);
-  const agent = getAgent(id);
+  const agent = await getAgent(user.ownerId, id);
   if (!agent) notFound();
 
-  const policies = listPolicies(agent.id);
+  const policies = await listPolicies(user.ownerId, agent.id);
   const current = policies[0] ?? null;
 
   return (

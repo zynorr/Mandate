@@ -1313,6 +1313,103 @@ code,
   border-bottom: 1px solid rgba(63, 72, 108, 0.3);
 }
 
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.user-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--mint);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.user-identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.user-identity strong {
+  overflow: hidden;
+  font-size: 0.69rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-identity small {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+}
+
+.user-signout {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--muted-strong);
+  cursor: pointer;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.user-signout:hover {
+  color: var(--brick);
+  border-color: var(--brick);
+}
+
+.user-mode {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-mobile-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-badge-compact {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.user-badge-compact .user-identity {
+  display: none;
+}
+
+.user-badge-compact .user-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.user-badge-compact .user-mode {
+  display: none;
+}
+
+.user-badge-compact .user-signout {
+  font-size: 0.56rem;
+}
+
 .app-main {
   display: flex;
   min-width: 0;
@@ -2858,6 +2955,123 @@ code,
   padding: 40px;
 }
 
+.signin-main {
+  min-height: calc(100vh - 78px);
+  padding: 76px 0 96px;
+}
+
+.signin-grid {
+  display: grid;
+  align-items: center;
+  gap: clamp(42px, 7vw, 96px);
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+}
+
+.signin-intro h1 {
+  max-width: 13ch;
+  margin-top: 14px;
+  font-size: clamp(2.9rem, 6vw, 5.1rem);
+  font-weight: 480;
+}
+
+.signin-lede {
+  max-width: 58ch;
+  margin-top: 22px;
+  color: var(--muted-strong);
+  font-size: 0.98rem;
+}
+
+.signin-points {
+  display: grid;
+  gap: 18px;
+  max-width: 56ch;
+  margin-top: 34px;
+}
+
+.signin-points > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.signin-points svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--green);
+}
+
+.signin-points p {
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+}
+
+.signin-points strong {
+  color: var(--ink);
+}
+
+.signin-card {
+  padding: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(150deg, rgba(164, 239, 107, 0.08), transparent 45%),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.signin-card h2 {
+  margin-top: 8px;
+  font-size: 2rem;
+  font-weight: 520;
+}
+
+.signin-card > p:not(.eyebrow, .signin-fineprint, .signin-help) {
+  margin-top: 13px;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+}
+
+.signin-button {
+  width: 100%;
+  margin-top: 26px;
+}
+
+.signin-error {
+  margin-top: 20px;
+  padding: 13px 15px;
+  border: 1px solid rgba(150, 63, 51, 0.25);
+  border-radius: var(--radius-sm);
+  background: var(--brick-soft);
+  color: var(--brick);
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.signin-help {
+  margin-top: 22px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--muted-strong);
+  font-size: 0.73rem;
+  line-height: 1.6;
+}
+
+.signin-fineprint {
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.65;
+}
+
+.signin-card .text-link {
+  display: inline-block;
+  margin-top: 20px;
+}
+
 .center-card {
   max-width: 560px;
   padding: 44px;
@@ -3216,6 +3430,14 @@ code,
 }
 
 @media (max-width: 900px) {
+  .signin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .signin-main {
+    padding-top: 52px;
+  }
+
   .site-nav {
     display: none;
   }
@@ -3428,6 +3650,18 @@ code,
 }
 
 @media (max-width: 620px) {
+  .signin-main {
+    padding: 38px 0 64px;
+  }
+
+  .signin-card {
+    padding: 26px 22px;
+  }
+
+  .signin-intro h1 {
+    font-size: clamp(2.5rem, 13vw, 3.6rem);
+  }
+
   .shell {
     width: min(calc(100% - 32px), var(--max));
   }

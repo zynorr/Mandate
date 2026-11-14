@@ -5,6 +5,7 @@ import { IntentForm } from "@/components/forms";
 import { ArrowRightIcon } from "@/components/icons";
 import { Note, PageHeader } from "@/components/ui";
 import { createIntentAction } from "@/lib/actions";
+import { requireUser } from "@/lib/auth";
 import { getAgent, listPolicies } from "@/lib/repo";
 
 export const metadata = {
@@ -16,11 +17,12 @@ export default async function NewIntentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
-  const agent = getAgent(id);
+  const agent = await getAgent(user.ownerId, id);
   if (!agent) notFound();
 
-  const policies = listPolicies(agent.id);
+  const policies = await listPolicies(user.ownerId, agent.id);
   const current = policies[0] ?? null;
 
   return (

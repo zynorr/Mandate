@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDateTime } from "@mandate/chain";
 import { PageHeader } from "@/components/ui";
 import { activityKindLabel } from "@/lib/labels";
+import { requireUser } from "@/lib/auth";
 import { listActivity, listAgents } from "@/lib/repo";
 
 export const metadata = {
@@ -13,10 +14,12 @@ export default async function ActivityPage({
 }: {
   searchParams: Promise<{ agent?: string }>;
 }) {
+  const user = await requireUser();
   const query = await searchParams;
-  const agents = listAgents();
+  const agents = await listAgents(user.ownerId);
   const selectedAgent = agents.find((agent) => agent.id === query.agent);
-  const activity = listActivity({
+  const activity = await listActivity({
+    ownerId: user.ownerId,
     agentId: selectedAgent?.id,
     limit: 150,
   });

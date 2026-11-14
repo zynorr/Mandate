@@ -18,6 +18,7 @@ import {
   PageHeader,
   SectionHeading,
 } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
 import { discoverAgentActivity } from "@/lib/discovery";
 import { getAgent } from "@/lib/repo";
 
@@ -30,11 +31,12 @@ export default async function DiscoverPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = await requireUser();
   const { id } = await params;
-  const agent = getAgent(id);
+  const agent = await getAgent(user.ownerId, id);
   if (!agent) notFound();
 
-  const discovery = await discoverAgentActivity(agent, 15);
+  const discovery = await discoverAgentActivity(user.ownerId, agent, 15);
 
   return (
     <>

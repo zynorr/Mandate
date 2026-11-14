@@ -111,7 +111,10 @@ block `30111955`.
 
 The run originally used `data/mandate-e2e.db`. Its records were imported into
 the default workspace database (`data/mandate.db`) so the Evidence, Activity,
-and agent pages show the run without switching databases.
+and agent pages show the run without switching databases. After the multi-user
+migration, these imported records belong to the built-in `local` owner and
+remain visible in local development; hosted GitHub accounts have separate
+workspaces.
 
 Imported records:
 

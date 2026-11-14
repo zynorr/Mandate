@@ -6,6 +6,7 @@ import {
   shortenHash,
   type EvidenceVerdict,
 } from "@mandate/chain";
+import { requireUser } from "@/lib/auth";
 import { getAppConfig } from "@/lib/config";
 import { EvidenceTable } from "@/components/evidence-table";
 import {
@@ -54,14 +55,18 @@ const activityLabel = (kind: string) => {
   }
 };
 
-export default function WorkspaceOverviewPage() {
+export default async function WorkspaceOverviewPage() {
+  const user = await requireUser();
   const network = networkLabel(getAppConfig().chainId);
-  const summary = getLedgerSummary();
-  const agents = listAgents();
+  const summary = await getLedgerSummary(user.ownerId);
+  const agents = await listAgents(user.ownerId);
   const sampleAgentCount = agents.filter((agent) => agent.isDemo).length;
-  const attention = listAttentionEvidence(5);
-  const recentEvidence = listEvidence({ limit: 7 });
-  const activity = listActivity({ limit: 6 });
+  const attention = await listAttentionEvidence(user.ownerId, 5);
+  const recentEvidence = await listEvidence({
+    ownerId: user.ownerId,
+    limit: 7,
+  });
+  const activity = await listActivity({ ownerId: user.ownerId, limit: 6 });
 
   return (
     <>
@@ -311,7 +316,7 @@ export default function WorkspaceOverviewPage() {
               )}
             </div>
             <div className="card-foot">
-              <span>Data stays local</span>
+              <span>Private to your account</span>
               <Link href="/app/activity" className="text-link">
                 View activity
               </Link>

@@ -7,14 +7,16 @@ import {
   PageHeader,
   SampleBadge,
 } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
 import { listAgents } from "@/lib/repo";
 
 export const metadata = {
   title: "Reports",
 };
 
-export default function ReportsPage() {
-  const agents = listAgents();
+export default async function ReportsPage() {
+  const user = await requireUser();
+  const agents = await listAgents(user.ownerId);
 
   return (
     <>

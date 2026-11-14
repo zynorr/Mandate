@@ -16,6 +16,7 @@ import {
   networkLabel,
   policyDraftSchema,
 } from "@mandate/chain";
+import { requireUser } from "./auth";
 import { getChainConfig } from "./config";
 import type { FormState } from "./form-state";
 import {
@@ -98,6 +99,7 @@ export async function createAgentAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const user = await requireUser();
   const parsed = agentDraftSchema.safeParse({
     name: stringField(formData, "name"),
     description: stringField(formData, "description"),
@@ -109,7 +111,7 @@ export async function createAgentAction(
 
   let agentId: string;
   try {
-    const agent = createAgent(parsed.data);
+    const agent = await createAgent(user.ownerId, parsed.data);
     agentId = agent.id;
   } catch (error) {
     return fail(
@@ -128,9 +130,10 @@ export async function createPolicyAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const user = await requireUser();
   const agentId = stringField(formData, "agentId").trim();
   if (!agentId) return fail("Agent is missing.");
-  if (!getAgent(agentId)) return fail("Agent not found.");
+  if (!(await getAgent(user.ownerId, agentId))) return fail("Agent not found.");
 
   const perAction = parseBotAmount(
     stringField(formData, "maxNativePerAction"),
@@ -168,7 +171,7 @@ export async function createPolicyAction(
   }
 
   try {
-    createPolicyVersion(agentId, parsed.data);
+    await createPolicyVersion(user.ownerId, agentId, parsed.data);
   } catch (error) {
     return fail(
       error instanceof AppError
@@ -185,6 +188,7 @@ export async function createIntentAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const user = await requireUser();
   const agentId = stringField(formData, "agentId").trim();
   const policyId = stringField(formData, "policyId").trim();
   if (!agentId || !policyId) return fail("Agent or policy is missing.");
@@ -211,7 +215,7 @@ export async function createIntentAction(
   }
 
   try {
-    createIntent(agentId, policyId, parsed.data);
+    await createIntent(user.ownerId, agentId, policyId, parsed.data);
   } catch (error) {
     return fail(
       error instanceof AppError
@@ -228,6 +232,7 @@ export async function attachEvidenceAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const user = await requireUser();
   const agentId = stringField(formData, "agentId").trim();
   const rawIntentId = stringField(formData, "intentId").trim();
   const parsed = attachEvidenceSchema.safeParse({
@@ -242,20 +247,20 @@ export async function attachEvidenceAction(
     );
   }
 
-  const agent = getAgent(agentId);
+  const agent = await getAgent(user.ownerId, agentId);
   if (!agent) return fail("Agent not found.");
 
   let intent = null;
   if (parsed.data.intentId) {
-    intent = getIntent(parsed.data.intentId);
+    intent = await getIntent(user.ownerId, parsed.data.intentId);
     if (!intent || intent.agentId !== agentId) {
       return fail("The selected intent does not belong to this agent.");
     }
   }
 
   const policy = intent
-    ? getPolicy(intent.policyId)
-    : getCurrentPolicy(agentId);
+    ? await getPolicy(user.ownerId, intent.policyId)
+    : await getCurrentPolicy(user.ownerId, agentId);
   if (!policy || policy.agentId !== agentId) {
     return fail(
       intent
@@ -264,7 +269,8 @@ export async function attachEvidenceAction(
     );
   }
 
-  const existing = getEvidenceByHash(
+  const existing = await getEvidenceByHash(
+    user.ownerId,
     agentId,
     parsed.data.kind,
     parsed.data.hash,
@@ -298,7 +304,8 @@ export async function attachEvidenceAction(
 
   const now = new Date();
   const attachedAt = now.toISOString();
-  const priorNativeValueTodayWei = priorNativeValueInUtcDay(
+  const priorNativeValueTodayWei = await priorNativeValueInUtcDay(
+    user.ownerId,
     agentId,
     now,
   );
@@ -333,7 +340,7 @@ export async function attachEvidenceAction(
   }
 
   try {
-    insertEvidence(record.data);
+    await insertEvidence(user.ownerId, record.data);
   } catch (error) {
     return fail(
       error instanceof AppError

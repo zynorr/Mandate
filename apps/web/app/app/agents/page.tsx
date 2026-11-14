@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDateTime, networkLabel } from "@mandate/chain";
 import { AgentIcon, ArrowRightIcon, PlusIcon } from "@/components/icons";
 import { EmptyState, PageHeader, SampleBadge } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
 import { getAppConfig } from "@/lib/config";
 import { listAgents } from "@/lib/repo";
 
@@ -9,9 +10,10 @@ export const metadata = {
   title: "Agents",
 };
 
-export default function AgentsPage() {
+export default async function AgentsPage() {
+  const user = await requireUser();
   const network = networkLabel(getAppConfig().chainId);
-  const agents = listAgents();
+  const agents = await listAgents(user.ownerId);
 
   return (
     <>

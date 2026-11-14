@@ -16,6 +16,7 @@ export interface DiscoveryResult {
 }
 
 export async function discoverAgentActivity(
+  ownerId: string,
   agent: AppAgent,
   limitPerSource = 12,
 ): Promise<DiscoveryResult> {
@@ -48,7 +49,7 @@ export async function discoverAgentActivity(
   }
 
   const existing = new Set(
-    listEvidence({ agentId: agent.id, limit: 1000 }).map(
+    (await listEvidence({ ownerId, agentId: agent.id, limit: 1000 })).map(
       (record) => `${record.kind}:${record.hash}`,
     ),
   );

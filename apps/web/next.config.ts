@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@mandate/chain"],
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["@libsql/client", "libsql"],
   poweredByHeader: false,
   async headers() {
     return [

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDateTime } from "@mandate/chain";
 import { ArrowRightIcon, SourceIcon } from "@/components/icons";
 import { PageHeader } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
 import { getAppConfig } from "@/lib/config";
 import { readSourceHealth } from "@/lib/source-health";
 
@@ -16,6 +17,7 @@ const statusLabel = {
 } as const;
 
 export default async function SourcesPage() {
+  await requireUser();
   const config = getAppConfig();
   const health = await readSourceHealth();
 

@@ -7,6 +7,7 @@ import {
 import { CopyButton } from "@/components/copy-button";
 import { AnchorIcon, ArrowUpRightIcon } from "@/components/icons";
 import { Note, PageHeader } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
 import {
   getAnchorCount,
   getAnchorLookup,
@@ -26,6 +27,7 @@ export default async function AnchorsPage({
 }: {
   searchParams: Promise<{ hash?: string | string[] }>;
 }) {
+  await requireUser();
   const query = await searchParams;
   const config = getAppConfig();
   const network = networkLabel(config.chainId);
