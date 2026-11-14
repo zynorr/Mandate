@@ -69,6 +69,57 @@ async function providerChainId(provider: {
   return { id: Number.parseInt(raw.slice(2), 16), raw };
 }
 
+function rpcErrorCode(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    return typeof code === "number" ? code : undefined;
+  }
+  return undefined;
+}
+
+async function ensureWalletChain(
+  provider: WalletProvider,
+  input: {
+    chainId: number;
+    networkName: string;
+    rpcUrl: string;
+    explorerUrl: string;
+  },
+) {
+  const expectedHex = `0x${input.chainId.toString(16)}`;
+  const current = await providerChainId(provider);
+  if (current.id === input.chainId) return current;
+
+  try {
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: expectedHex }],
+    });
+  } catch (error) {
+    if (rpcErrorCode(error) !== 4902) throw error;
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          chainId: expectedHex,
+          chainName: input.networkName,
+          nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+          rpcUrls: [input.rpcUrl],
+          blockExplorerUrls: [input.explorerUrl],
+        },
+      ],
+    });
+  }
+
+  const switched = await providerChainId(provider);
+  if (switched.id !== input.chainId) {
+    throw new Error(
+      `MetaMask is still reporting chain ${switched.id} (${switched.raw}); expected ${input.networkName} (${input.chainId}).`,
+    );
+  }
+  return switched;
+}
+
 export function WalletAnchor({
   contentHash,
   validHash,
@@ -126,12 +177,12 @@ export function WalletAnchor({
       transport: custom(provider),
     });
     const [connectedAccount] = await walletClient.requestAddresses();
-    const walletChain = await providerChainId(provider);
-    if (walletChain.id !== chainId) {
-      setStatus("error");
-      setMessage(`Your wallet reports chain ${walletChain.id} (${walletChain.raw}). Switch MetaMask to ${networkName} (chain ID ${chainId}) and try again.`);
-      return null;
-    }
+    await ensureWalletChain(provider, {
+      chainId,
+      networkName,
+      rpcUrl,
+      explorerUrl,
+    });
     setAccount(connectedAccount);
     return connectedAccount;
   }
@@ -164,12 +215,12 @@ export function WalletAnchor({
         transport: custom(provider),
       });
       const [connectedAccount] = await walletClient.requestAddresses();
-      const walletChain = await providerChainId(provider);
-      if (walletChain.id !== chainId) {
-        setStatus("error");
-        setMessage(`Your wallet reports chain ${walletChain.id} (${walletChain.raw}). Switch MetaMask to ${networkName} (chain ID ${chainId}) and try again.`);
-        return;
-      }
+      await ensureWalletChain(provider, {
+        chainId,
+        networkName,
+        rpcUrl,
+        explorerUrl,
+      });
       setAccount(connectedAccount);
       setStatus("sending");
       const hash = await walletClient.writeContract({
