@@ -134,7 +134,7 @@ async function ensureOwnerColumn(db: Client, table: string): Promise<void> {
   }
 }
 
-async function migrate(db: Client): Promise<void> {
+async function migrate(db: Client, isLocalDatabase: boolean): Promise<void> {
   await db.executeMultiple(schema);
 
   for (const table of ["agents", "policies", "intents", "evidence", "activity"]) {
@@ -156,7 +156,12 @@ async function migrate(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS activity_owner_created_idx
       ON activity(owner_id, created_at DESC);
   `);
-  await db.execute("PRAGMA user_version = 2");
+  // Turso/libSQL rejects writes to SQLite's user_version PRAGMA. The local
+  // SQLite database keeps this marker for the migration documentation, while
+  // remote databases rely on the idempotent schema and index checks above.
+  if (isLocalDatabase) {
+    await db.execute("PRAGMA user_version = 2");
+  }
 }
 
 async function initDb(): Promise<Client> {
@@ -178,7 +183,7 @@ async function initDb(): Promise<Client> {
   });
 
   try {
-    await migrate(db);
+    await migrate(db, Boolean(config.databaseLocalPath));
   } catch (error) {
     db.close();
     throw error;
