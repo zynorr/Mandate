@@ -703,7 +703,7 @@
       <div class="cover-mark">Mandate</div>
 
       <div>
-        <p class="eyebrow">Agent authorization evidence · BOT Chain Bohr testnet</p>
+        <p class="eyebrow">Agent authorization evidence · BOT Chain mainnet</p>
         <h1>Approve the action.<br />Verify what <em>happened</em>.</h1>
         <p class="lede" style="margin-top: 24px">
           A read-only evidence ledger that compares a human-approved intent with
@@ -733,8 +733,8 @@
 
       <div class="cover-meta">
         <span>Product pitch</span>
-        <span>October 2026</span>
-        <span>Chain ID 968 · ERC-4337 v0.7</span>
+         <span>November 2026</span>
+        <span>Chain ID 677 · ERC-4337 v0.7</span>
       </div>
 
       <div class="foot">
@@ -828,7 +828,7 @@
             <li>No custody, gas sponsorship, or UserOperation submission</li>
             <li>No on-chain enforcement — policies are review rules</li>
             <li>No claim of success before a receipt exists</li>
-            <li>Testnet only; chain ID is validated against 968</li>
+            <li>BOT Chain mainnet and Bohr testnet; chain ID is explicit</li>
           </ul>
 
           <div class="card" style="margin-top: 22px; border-left: 3px solid var(--indigo)">
@@ -859,7 +859,7 @@
         <article class="step">
           <span class="step-num">01</span>
           <h3>Register the smart account</h3>
-          <p>Add the BOT Chain testnet account you want to review. This is the identity evidence is matched against.</p>
+          <p>Add the BOT Chain smart account you want to review. This is the identity evidence is matched against.</p>
           <span class="step-tag">Account record</span>
         </article>
         <article class="step">
@@ -1055,7 +1055,7 @@
         <div class="card">
           <div class="card-tag" style="color: var(--evergreen)">Checked</div>
           <ul class="list">
-            <li>Chain ID is 968 and the observed sender matches the registered account</li>
+            <li>Configured chain ID and the observed sender matches the registered account</li>
             <li>Target, method selector, native value, policy expiry, daily caps</li>
             <li>Supported Kernel and SimpleAccount call decoding</li>
             <li>Token movements, shown as context</li>
@@ -1107,10 +1107,10 @@
 
         <article class="card">
           <div class="card-tag">Pilots need review, not demos</div>
-          <h3>Testnet pilots today</h3>
+          <h3>BOT Chain pilots today</h3>
           <p style="margin-top: 10px">
-            BOT Chain Bohr testnet is where agent pilots run. Teams need a
-            readable authorization trail before they can hand a program real
+            BOT Chain mainnet is now supported alongside Bohr testnet. Teams need
+            a readable authorization trail before they can hand a program real
             authority.
           </p>
         </article>
@@ -1119,7 +1119,7 @@
           <div class="card-tag">Regulators ask for provenance</div>
           <h3>Proof of approval</h3>
           <p style="margin-top: 10px">
-            The question an reviewer asks is narrow: what was approved, by whom,
+            The question a reviewer asks is narrow: what was approved, by whom,
             against which policy, and what did the chain actually record?
           </p>
         </article>
@@ -1129,7 +1129,7 @@
         <div>
           <div class="split-label">Who it is for</div>
           <ul class="list">
-            <li>Teams running agent pilots on BOT Chain testnet</li>
+            <li>Teams running agent pilots on BOT Chain</li>
             <li>Security and risk reviewers signing off on agent authority</li>
             <li>Integrators who must show an approval trail to a customer</li>
           </ul>
@@ -1214,15 +1214,15 @@
         <div class="chain-card">
           <dl>
             <dt>Registry</dt>
-            <dd>0xe923e156570961283198faad9e59744b49d1e523</dd>
+            <dd>0xc69367d69b12bc14397773d11ad462f2f1d7aeb4</dd>
             <dt>Deploy tx</dt>
-            <dd>0x1509a5fd4ca468a00151e8a5d6f0540daa740fcd72468b7b42eef3b24fef0756</dd>
+            <dd>0x6fba151a852905a2bb0be946db5bdab3915d5396165f01e47260a44fb624787f</dd>
             <dt>Block</dt>
-            <dd>27678056</dd>
+            <dd>28655203</dd>
             <dt>Chain</dt>
-            <dd>BOT Chain Bohr testnet · 968</dd>
+            <dd>BOT Chain mainnet · 677</dd>
             <dt>Explorer</dt>
-            <dd>scan.bohr.life/address/0xe923…e523</dd>
+            <dd>scan.botchain.ai/address/0xc693…aeb4</dd>
             <dt>Compiler</dt>
             <dd>solc 0.8.37 · runtime 1830 bytes</dd>
           </dl>
@@ -1231,8 +1231,8 @@
         <div>
           <p class="lede" style="font-size: 18.5px; color: #dfe6e1">
             The registry stores a content hash, a kind, a recorder address, and a
-            block timestamp. Policy, intent, report, and evidence hashes are
-            written by a local burner key and read back by the app.
+            block timestamp. Policy, intent, and report hashes from the mainnet
+            E2E run are recorded on BOT Chain and read back by the app.
           </p>
 
           <div class="rule" style="background: rgba(242, 239, 230, 0.2)"></div>
@@ -1240,7 +1240,7 @@
           <ul class="list" style="gap: 12px">
             <li style="color: #dfe6e1">No owner, custody, enforcement, upgrade path, or deletion</li>
             <li style="color: #dfe6e1">First recorder of a hash wins; the app only ever reads</li>
-            <li style="color: #dfe6e1">This deck's own SHA-256 is anchored as a report on chain</li>
+            <li style="color: #dfe6e1">Report, policy, and intent hashes are anchored from the E2E run</li>
           </ul>
 
           <p class="note" style="margin-top: 24px">
@@ -1276,20 +1276,21 @@
             <li>Activity discovery through BOT Scan</li>
             <li>JSON and Markdown report exports with fingerprints</li>
             <li>Anchor registry deployed and read by the app</li>
-            <li>19 passing unit tests plus an opt-in live testnet test</li>
-            <li>Vercel-ready Next.js build; SQLite storage</li>
+            <li>24 passing unit tests plus an opt-in live test</li>
+            <li>Multi-user workspaces with GitHub OAuth and durable libSQL storage</li>
+            <li>BOT Chain mainnet E2E run with 39 registry anchors</li>
           </ul>
         </div>
 
         <div class="phase">
-          <span class="phase-tag">Next</span>
-          <h3>Multi-operator review</h3>
+          <span class="phase-tag">Grant milestone</span>
+          <h3>Turn proof into a pilot</h3>
           <ul>
-            <li>Authentication and database access controls</li>
-            <li>Reviewer roles, sign-off, and audit history</li>
-            <li>Scheduled evidence sweeps instead of manual attachment</li>
-            <li>Deeper inner-call decoding and coverage reporting</li>
-            <li>Webhooks and CI checks on report fingerprints</li>
+            <li>Deploy the private hosted mainnet workspace</li>
+            <li>Onboard three BOT Chain agent teams</li>
+            <li>Run one evidence review with each team</li>
+            <li>Publish three redacted reports and one integration guide</li>
+            <li>Collect reviewer feedback for the next release</li>
           </ul>
         </div>
 
@@ -1297,7 +1298,7 @@
           <span class="phase-tag">Later</span>
           <h3>Beyond one chain</h3>
           <ul>
-            <li>Chain adapters past BOT Chain testnet, each with explicit coverage</li>
+            <li>Chain adapters beyond BOT Chain, each with explicit coverage</li>
             <li>Policy templates for common agent mandates</li>
             <li>Org-level anchor directories and retention policy</li>
             <li>Independent verification of report fingerprints</li>
@@ -1308,9 +1309,9 @@
       <div class="rule" style="margin: 22px 0 16px"></div>
 
       <p class="note" style="max-width: 1040px">
-        Testnet only — chain ID 968 is enforced, limits are documented in the
-        README, the UI, and every export, and one command runs typecheck, tests,
-        lint, and contract compilation.
+        Mainnet-ready — chain ID 677 is supported and validated, limits are
+        documented in the README, the UI, and every export, and one command runs
+        typecheck, tests, lint, and contract compilation.
       </p>
 
       <div class="foot">
@@ -1326,16 +1327,27 @@
         <span>12</span>
       </div>
 
-      <p class="close-quote">
-        Give reviewers the record they can actually defend: what was approved,
-        what happened, and what is still missing.
-      </p>
+       <p class="close-quote">
+         Give reviewers the record they can actually defend: what was approved,
+         what happened, and what is still missing.
+       </p>
 
-      <div class="grid-3" style="margin-top: 40px">
+       <div class="card" style="margin-top: 28px; background: rgba(255,255,255,0.08); border-color: rgba(242,239,230,0.24); color: #f2efe6">
+         <div class="split-label" style="color: #9fc4b1">The $1,000 grant</div>
+         <h3 style="color: #fbf8f0; font-size: 28px">Fund the first three-user mainnet pilot.</h3>
+         <p style="margin-top: 10px; color: #dfe6e1; font-size: 15.5px; line-height: 1.55">
+           $450 for hosted database and deployment costs; $300 for BOT Chain gas,
+           test accounts, and evidence runs; $250 for onboarding, redacted reports,
+           and integration documentation. The deliverable is public proof of three
+           reviewed agent workflows, not a promise of adoption or revenue.
+         </p>
+       </div>
+
+       <div class="grid-3" style="margin-top: 24px">
         <div>
           <div class="split-label" style="color: #9fc4b1">Pilot with us</div>
           <p style="color: #dfe6e1; font-size: 15.5px; line-height: 1.55">
-            Run Mandate against a BOT Chain testnet smart account and review your
+             Run Mandate against a BOT Chain mainnet smart account and review your
             first week of agent activity.
           </p>
         </div>
@@ -1357,7 +1369,7 @@
 
       <div class="close-links">
         <span>github.com/zynorr/Mandate</span>
-        <span>scan.bohr.life · chain 968</span>
+         <span>scan.botchain.ai · chain 677</span>
         <span>docs/pitch/mandate-pitch-deck.pdf</span>
       </div>
 
