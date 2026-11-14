@@ -68,7 +68,7 @@ Use a Turso/libSQL database for the hosted app. The serverless filesystem is eph
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
 
-4. Import `zynorr/Mandate` from GitHub. Leave the Vercel Root Directory at the repository root. `vercel.json` runs `npm install`, builds `@mandate/web`, and publishes `apps/web/.next`.
+4. Import `zynorr/Mandate` from GitHub. Set the Vercel Root Directory to `apps/web` (the monorepo build still uses the repository lockfile and workspace command). `vercel.json` runs `npm install`, builds `@mandate/web`, and publishes the Next.js `.next` directory from that project root.
 
 5. Deploy. The schema is created or migrated automatically on the first database connection. Missing hosted database or OAuth configuration stops the app instead of falling back to a shared public workspace.
 
