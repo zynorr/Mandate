@@ -100,6 +100,15 @@ Policies compare the sender, target, method selector, native value, per-action a
 
 The test suite contains a verified BOT Chain testnet sample. To exercise live attachment manually, register an agent with smart account `0xa682DB3Da0F37853CaB81F7aC538E067F72CF252`, approve a target of `0x402085c248EeA27D92E8b30b2C58ed07f9E20001` with method selector `0x13cd3b53`, then attach UserOperation `0xcab1d7788d6c6109c769700f29c338fae29dec0e8ecf7b28514a8b61681fc41e`.
 
+## Mainnet E2E run
+
+The 2026-11-14 BOT Chain mainnet run is documented in
+[`docs/mainnet-e2e.md`](docs/mainnet-e2e.md). It covers registry edge cases,
+native-transfer policy verdicts (matched, daily cap, per-action cap, and wrong
+target), a rejected sender mismatch, and the on-chain anchor transaction for
+the policy, intent, and report fingerprints. The same records are available in
+the workspace Evidence, Activity, and agent pages.
+
 ## Anchor registry
 
 The registry is deployed on both supported networks.

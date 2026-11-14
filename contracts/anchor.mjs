@@ -35,9 +35,6 @@ if (kind === undefined) {
 if (!contentHash?.match(/^0x[0-9a-fA-F]{64}$/)) {
   throw new Error("Pass a 32-byte --hash value");
 }
-if (!fs.existsSync(artifactPath) || !fs.existsSync(deploymentPath)) {
-  throw new Error("Compile and deploy the registry before anchoring");
-}
 
 const readEnvFile = (filePath) => {
   if (!fs.existsSync(filePath)) return {};
@@ -60,6 +57,10 @@ const deploymentPath = path.join(
   "deployments",
   `${network.chainId}.json`,
 );
+
+if (!fs.existsSync(artifactPath) || !fs.existsSync(deploymentPath)) {
+  throw new Error("Compile and deploy the registry before anchoring");
+}
 
 if (!privateKey?.match(/^0x[0-9a-fA-F]{64}$/)) {
   throw new Error("DEPLOYER_PRIVATE_KEY is missing or malformed");
