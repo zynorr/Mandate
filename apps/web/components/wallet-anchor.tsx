@@ -13,6 +13,11 @@ import {
 declare global {
   interface Window {
     ethereum?: {
+      isMetaMask?: boolean;
+      providers?: Array<{
+        isMetaMask?: boolean;
+        request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+      }>;
       request(args: { method: string; params?: unknown[] }): Promise<unknown>;
     };
   }
@@ -50,6 +55,22 @@ function errorMessage(error: unknown): string {
   return "The wallet request could not be completed.";
 }
 
+function walletProvider() {
+  const injected = window.ethereum;
+  if (!injected) return null;
+  return injected.providers?.find((provider) => provider.isMetaMask) ?? injected;
+}
+
+async function providerChainId(provider: {
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+}): Promise<{ id: number; raw: string }> {
+  const raw = await provider.request({ method: "eth_chainId" });
+  if (typeof raw !== "string" || !/^0x[0-9a-f]+$/i.test(raw)) {
+    throw new Error("The wallet returned an invalid chain ID.");
+  }
+  return { id: Number.parseInt(raw.slice(2), 16), raw };
+}
+
 export function WalletAnchor({
   contentHash,
   validHash,
@@ -74,7 +95,8 @@ export function WalletAnchor({
   const [transactionHash, setTransactionHash] = useState<Hex | null>(null);
 
   async function connectWallet(): Promise<Address | null> {
-    if (!window.ethereum) {
+    const provider = walletProvider();
+    if (!provider) {
       setStatus("error");
       setMessage("No browser wallet found. Install MetaMask or another EIP-1193 wallet.");
       return null;
@@ -88,13 +110,13 @@ export function WalletAnchor({
     } as const;
     const walletClient = createWalletClient({
       chain,
-      transport: custom(window.ethereum),
+      transport: custom(provider),
     });
     const [connectedAccount] = await walletClient.requestAddresses();
-    const walletChainId = await walletClient.getChainId();
-    if (walletChainId !== chainId) {
+    const walletChain = await providerChainId(provider);
+    if (walletChain.id !== chainId) {
       setStatus("error");
-      setMessage(`Switch your wallet to ${networkName} (chain ID ${chainId}) and try again.`);
+      setMessage(`Your wallet reports chain ${walletChain.id} (${walletChain.raw}). Switch MetaMask to ${networkName} (chain ID ${chainId}) and try again.`);
       return null;
     }
     setAccount(connectedAccount);
@@ -102,7 +124,8 @@ export function WalletAnchor({
   }
 
   async function connectAndAnchor() {
-    if (!window.ethereum) {
+    const provider = walletProvider();
+    if (!provider) {
       setStatus("error");
       setMessage("No browser wallet found. Install MetaMask or another EIP-1193 wallet.");
       return;
@@ -125,13 +148,13 @@ export function WalletAnchor({
       } as const;
       const walletClient = createWalletClient({
         chain,
-        transport: custom(window.ethereum),
+        transport: custom(provider),
       });
       const [connectedAccount] = await walletClient.requestAddresses();
-      const walletChainId = await walletClient.getChainId();
-      if (walletChainId !== chainId) {
+      const walletChain = await providerChainId(provider);
+      if (walletChain.id !== chainId) {
         setStatus("error");
-        setMessage(`Switch your wallet to ${networkName} (chain ID ${chainId}) and try again.`);
+        setMessage(`Your wallet reports chain ${walletChain.id} (${walletChain.raw}). Switch MetaMask to ${networkName} (chain ID ${chainId}) and try again.`);
         return;
       }
       setAccount(connectedAccount);
