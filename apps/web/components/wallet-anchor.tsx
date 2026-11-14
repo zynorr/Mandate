@@ -1,0 +1,159 @@
+"use client";
+
+import { useState } from "react";
+import {
+  createPublicClient,
+  createWalletClient,
+  custom,
+  http,
+  type Address,
+  type Hex,
+} from "viem";
+
+declare global {
+  interface Window {
+    ethereum?: {
+      request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+    };
+  }
+}
+
+const anchorAbi = [
+  {
+    type: "function",
+    name: "anchor",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "contentHash", type: "bytes32" },
+      { name: "kind", type: "uint8" },
+    ],
+    outputs: [],
+  },
+] as const;
+
+const kinds = [
+  ["policy", "Policy hash"],
+  ["intent", "Intent fingerprint"],
+  ["report", "Report fingerprint"],
+  ["evidence", "Evidence hash"],
+] as const;
+
+const kindValues = {
+  policy: 0,
+  intent: 1,
+  report: 2,
+  evidence: 3,
+} as const;
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return "The wallet request could not be completed.";
+}
+
+export function WalletAnchor({
+  contentHash,
+  chainId,
+  networkName,
+  rpcUrl,
+  registryAddress,
+  explorerUrl,
+}: {
+  contentHash: string;
+  chainId: number;
+  networkName: string;
+  rpcUrl: string;
+  registryAddress: Address;
+  explorerUrl: string;
+}) {
+  const [kind, setKind] = useState<(typeof kinds)[number][0]>("report");
+  const [account, setAccount] = useState<Address | null>(null);
+  const [status, setStatus] = useState<"idle" | "connecting" | "sending" | "waiting" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const [transactionHash, setTransactionHash] = useState<Hex | null>(null);
+
+  async function connectAndAnchor() {
+    if (!window.ethereum) {
+      setStatus("error");
+      setMessage("No browser wallet found. Install MetaMask or another EIP-1193 wallet.");
+      return;
+    }
+    if (!/^0x[0-9a-fA-F]{64}$/.test(contentHash)) {
+      setStatus("error");
+      setMessage("Enter a valid 32-byte content hash before anchoring.");
+      return;
+    }
+
+    try {
+      setStatus("connecting");
+      setMessage("");
+      const chain = {
+        id: chainId,
+        name: networkName,
+        nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+        rpcUrls: { default: { http: [rpcUrl] } },
+        blockExplorers: { default: { name: "BOT Scan", url: explorerUrl } },
+      } as const;
+      const walletClient = createWalletClient({
+        chain,
+        transport: custom(window.ethereum),
+      });
+      const [connectedAccount] = await walletClient.requestAddresses();
+      const walletChainId = await walletClient.getChainId();
+      if (walletChainId !== chainId) {
+        setStatus("error");
+        setMessage(`Switch your wallet to ${networkName} (chain ID ${chainId}) and try again.`);
+        return;
+      }
+      setAccount(connectedAccount);
+      setStatus("sending");
+      const hash = await walletClient.writeContract({
+        account: connectedAccount,
+        address: registryAddress,
+        abi: anchorAbi,
+        functionName: "anchor",
+        args: [contentHash as Hex, kindValues[kind]],
+      });
+      setTransactionHash(hash);
+      setStatus("waiting");
+      const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== "success") throw new Error("The anchor transaction reverted.");
+      setStatus("done");
+      setMessage("The hash is now recorded on chain.");
+    } catch (error) {
+      setStatus("error");
+      setMessage(errorMessage(error));
+    }
+  }
+
+  const busy = status === "connecting" || status === "sending" || status === "waiting";
+  return (
+    <section className="card wallet-anchor-card">
+      <div className="card-head">
+        <div>
+          <p className="field-label">User-paid on-chain proof</p>
+          <h2>Anchor this hash</h2>
+          <p>Connect a wallet and approve the transaction. Mandate never sees your private key.</p>
+        </div>
+      </div>
+      <div className="card-body">
+        <div className="wallet-anchor-controls">
+          <label className="field">
+            <span className="field-label">Record type</span>
+            <select value={kind} onChange={(event) => setKind(event.target.value as typeof kind)} disabled={busy}>
+              {kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          <button type="button" className="button button-ink" onClick={connectAndAnchor} disabled={busy}>
+            {busy ? status === "waiting" ? "Waiting for confirmation…" : "Waiting for wallet…" : status === "done" ? "Anchor another hash" : "Connect wallet & anchor"}
+          </button>
+        </div>
+        <p className="form-actions-note">
+          You pay the {networkName} gas fee directly from {account ? `${account.slice(0, 6)}…${account.slice(-4)}` : "your connected wallet"}.
+        </p>
+        {message ? <p className={status === "error" ? "wallet-anchor-message error" : "wallet-anchor-message"}>{message}</p> : null}
+        {transactionHash ? <p className="small-muted"><a className="text-link" href={`${explorerUrl}/tx/${transactionHash}`} target="_blank" rel="noreferrer">View transaction on BOT Scan</a></p> : null}
+      </div>
+    </section>
+  );
+}

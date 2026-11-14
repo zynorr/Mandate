@@ -6,6 +6,7 @@ import {
 } from "@mandate/chain";
 import { CopyButton } from "@/components/copy-button";
 import { AnchorIcon, ArrowUpRightIcon } from "@/components/icons";
+import { WalletAnchor } from "@/components/wallet-anchor";
 import { Note, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import {
@@ -125,8 +126,8 @@ export default async function AnchorsPage({
             </div>
             <div className="form-actions">
               <p className="form-actions-note">
-                Anchors are optional on-chain records. The workspace never
-                creates them.
+                Anchors are optional on-chain records. Connect your wallet when
+                you want to create one and pay the network fee yourself.
               </p>
               <button type="submit" className="button button-ink">
                 <AnchorIcon size={15} />
@@ -136,6 +137,17 @@ export default async function AnchorsPage({
           </form>
         </div>
       </section>
+
+      {registry.address && validHash ? (
+        <WalletAnchor
+          contentHash={contentHash.toLowerCase()}
+          chainId={config.chainId}
+          networkName={config.networkName}
+          rpcUrl={config.rpcUrl}
+          registryAddress={registry.address}
+          explorerUrl={registry.explorerUrl}
+        />
+      ) : null}
 
       {contentHash && !validHash ? (
         <div className="note-spaced">

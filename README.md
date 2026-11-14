@@ -2,7 +2,7 @@
 
 Mandate is a read-only, multi-user evidence ledger for agent actions on **BOT Chain** — mainnet (chain ID 677) or Bohr testnet (chain ID 968). Each signed-in account gets a private workspace that records the action a human approved, the policy version that applied, and the public transaction or ERC-4337 UserOperation that actually happened. It then shows where the record matches, where it does not, and what evidence is missing.
 
-Mandate does not hold funds, sign messages, submit UserOperations, or enforce policy on-chain. An optional anchor registry records policy, intent, and report hashes on BOT Chain; the app only reads those anchors.
+Mandate does not hold funds, sign messages, submit UserOperations, or enforce policy on-chain. An optional anchor registry records policy, intent, and report hashes on BOT Chain. Users may connect a browser wallet to create an anchor and pay the network fee directly; Mandate never receives private keys or submits a transaction without wallet approval.
 
 ## Quick start
 
@@ -201,7 +201,7 @@ BOT Chain Bohr testnet (chain ID 968):
 
 The contract stores a content hash, kind, recorder address, and block timestamp. It has no owner, custody, enforcement, upgrade path, or deletion. The first recorder of a hash wins. An anchor proves that a hash was recorded on chain by an address at a time; it does not prove authorship, correctness, or that the underlying record is current.
 
-The workspace reads anchors through `MANDATE_ANCHOR_REGISTRY_ADDRESS` and never creates them. Never use a private key pasted into chat, source control, or a shared environment. For mainnet, use a newly generated dedicated deployer key with only the BOT needed for gas, stored in a secret manager or local ignored `.env.deploy.local`; verify its exposure status first and never reuse a compromised key.
+The workspace reads anchors through `MANDATE_ANCHOR_REGISTRY_ADDRESS`. On the Anchors page, a user can connect an EIP-1193 browser wallet, choose the record type, and approve a direct `anchor(bytes32,uint8)` transaction. The wallet must be on the configured chain; the connected account pays gas and becomes the recorder. Mandate never receives private keys or silently submits transactions. Never use a private key pasted into chat, source control, or a shared environment. For mainnet, use a wallet with only the BOT needed for gas; verify its exposure status first and never reuse a compromised key.
 
 ```powershell
 # Deploy the registry to testnet and write contracts/deployments/968.json

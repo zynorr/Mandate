@@ -3384,6 +3384,38 @@ code,
   margin-top: 38px;
 }
 
+.wallet-anchor-card {
+  margin-top: 24px;
+  border-left: 3px solid var(--evergreen);
+}
+
+.wallet-anchor-controls {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.wallet-anchor-controls .field {
+  min-width: 220px;
+  flex: 1;
+}
+
+.wallet-anchor-controls select {
+  width: 100%;
+}
+
+.wallet-anchor-message {
+  margin-top: 12px;
+  color: var(--evergreen);
+  font-weight: 600;
+}
+
+.wallet-anchor-message.error {
+  color: var(--brick);
+  overflow-wrap: anywhere;
+}
+
 .anchor-form {
   display: grid;
   gap: 20px;

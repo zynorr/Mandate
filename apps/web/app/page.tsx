@@ -389,9 +389,10 @@ export default function HomePage() {
                   <div>
                     <h3>Optional hash anchors</h3>
                     <p>
-                      Policy, intent, and report hashes can be checked against a
-                      read-only registry. An anchor proves the hash was recorded,
-                      not that the record is correct.
+                       Policy, intent, and report hashes can be checked against a
+                       public registry. Connect a wallet on the Anchors page to
+                       record a hash yourself and pay the network fee; an anchor
+                       proves the hash was recorded, not that the record is correct.
                     </p>
                   </div>
                 </div>
