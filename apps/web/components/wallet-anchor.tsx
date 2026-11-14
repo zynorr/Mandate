@@ -52,6 +52,7 @@ function errorMessage(error: unknown): string {
 
 export function WalletAnchor({
   contentHash,
+  validHash,
   chainId,
   networkName,
   rpcUrl,
@@ -59,6 +60,7 @@ export function WalletAnchor({
   explorerUrl,
 }: {
   contentHash: string;
+  validHash: boolean;
   chainId: number;
   networkName: string;
   rpcUrl: string;
@@ -70,6 +72,34 @@ export function WalletAnchor({
   const [status, setStatus] = useState<"idle" | "connecting" | "sending" | "waiting" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
   const [transactionHash, setTransactionHash] = useState<Hex | null>(null);
+
+  async function connectWallet(): Promise<Address | null> {
+    if (!window.ethereum) {
+      setStatus("error");
+      setMessage("No browser wallet found. Install MetaMask or another EIP-1193 wallet.");
+      return null;
+    }
+    const chain = {
+      id: chainId,
+      name: networkName,
+      nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+      rpcUrls: { default: { http: [rpcUrl] } },
+      blockExplorers: { default: { name: "BOT Scan", url: explorerUrl } },
+    } as const;
+    const walletClient = createWalletClient({
+      chain,
+      transport: custom(window.ethereum),
+    });
+    const [connectedAccount] = await walletClient.requestAddresses();
+    const walletChainId = await walletClient.getChainId();
+    if (walletChainId !== chainId) {
+      setStatus("error");
+      setMessage(`Switch your wallet to ${networkName} (chain ID ${chainId}) and try again.`);
+      return null;
+    }
+    setAccount(connectedAccount);
+    return connectedAccount;
+  }
 
   async function connectAndAnchor() {
     if (!window.ethereum) {
@@ -126,6 +156,25 @@ export function WalletAnchor({
     }
   }
 
+  async function handleWalletAction() {
+    if (!validHash) {
+      try {
+        setStatus("connecting");
+        setMessage("");
+        const connected = await connectWallet();
+        if (connected) {
+          setStatus("done");
+          setMessage("Wallet connected. Enter a valid hash above to create an anchor.");
+        }
+      } catch (error) {
+        setStatus("error");
+        setMessage(errorMessage(error));
+      }
+      return;
+    }
+    await connectAndAnchor();
+  }
+
   const busy = status === "connecting" || status === "sending" || status === "waiting";
   return (
     <section className="card wallet-anchor-card">
@@ -133,7 +182,7 @@ export function WalletAnchor({
         <div>
           <p className="field-label">User-paid on-chain proof</p>
           <h2>Anchor this hash</h2>
-          <p>Connect a wallet and approve the transaction. Mandate never sees your private key.</p>
+          <p>{validHash ? "Connect a wallet and approve the transaction. Mandate never sees your private key." : "Connect your wallet here, then enter a hash above when you are ready to anchor."}</p>
         </div>
       </div>
       <div className="card-body">
@@ -144,8 +193,8 @@ export function WalletAnchor({
               {kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
-          <button type="button" className="button button-ink" onClick={connectAndAnchor} disabled={busy}>
-            {busy ? status === "waiting" ? "Waiting for confirmation…" : "Waiting for wallet…" : status === "done" ? "Anchor another hash" : "Connect wallet & anchor"}
+          <button type="button" className="button button-ink" onClick={handleWalletAction} disabled={busy}>
+            {busy ? status === "waiting" ? "Waiting for confirmation…" : "Waiting for wallet…" : validHash ? status === "done" ? "Anchor another hash" : "Connect wallet & anchor" : account ? "Wallet connected" : "Connect wallet"}
           </button>
         </div>
         <p className="form-actions-note">

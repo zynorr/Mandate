@@ -138,9 +138,10 @@ export default async function AnchorsPage({
         </div>
       </section>
 
-      {registry.address && validHash ? (
+      {registry.address ? (
         <WalletAnchor
           contentHash={contentHash.toLowerCase()}
+          validHash={validHash}
           chainId={config.chainId}
           networkName={config.networkName}
           rpcUrl={config.rpcUrl}
