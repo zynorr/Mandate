@@ -66,13 +66,13 @@ export default function HomePage() {
                   Verify what <em>happened</em>.
                 </h1>
                 <p className="hero-lede">
-                  Mandate compares an approved intent with activity from a{" "}
-                  {network} smart account, then keeps the comparison and its
-                  coverage gaps in a reviewable ledger.
+                  Mandate compares an approved action with activity from a{" "}
+                  {network} smart account and shows exactly what matched, what
+                  failed, and what could not be verified.
                 </p>
                 <div className="hero-actions">
                   <Link href="/app" className="button button-ink">
-                    Open the evidence ledger
+                    Open workspace
                     <ArrowRightIcon size={16} />
                   </Link>
                   <a href="#how-it-works" className="button button-ghost">
@@ -81,7 +81,7 @@ export default function HomePage() {
                 </div>
                 <div className="hero-footnote">
                   <span>Review-first app</span>
-                  <span>No custody or signing</span>
+                   <span>Wallet is optional</span>
                   <span>
                     {network} · {config.chainId}
                   </span>
@@ -160,7 +160,8 @@ export default function HomePage() {
             <div className="trust-strip" aria-label="Product boundaries">
               <div className="trust-item">
                 <strong>Account-scoped workspace</strong>
-                Google sign-in keeps each ledger private. No keys or signing.
+                Google sign-in keeps each workspace private. Wallet actions are
+                optional and always require your approval.
               </div>
               <div className="trust-item">
                 <strong>Specific approvals</strong>
@@ -233,8 +234,8 @@ export default function HomePage() {
                 <p className="eyebrow">How it works</p>
                 <h2>From an approved action to an audit record.</h2>
                 <p>
-                  Five steps. No wallet connection or custody. Policies are
-                  review rules, not on-chain enforcement.
+                  Start with a smart account and an approval rule. Wallet use is
+                  optional; policies are review rules, not on-chain controls.
                 </p>
               </div>
               <div className="steps">
@@ -288,7 +289,7 @@ export default function HomePage() {
                 <article className="step">
                   <span className="step-number">05</span>
                   <div>
-                    <h3>Review or export the ledger</h3>
+                     <h3>Review or export results</h3>
                     <p>
                       Inspect every comparison, coverage note, and token movement.
                       Export a JSON or Markdown report with a content fingerprint.

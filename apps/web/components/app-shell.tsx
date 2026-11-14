@@ -40,10 +40,10 @@ export function AppShell({
         <AppNav agents={shellAgents(agents)} />
         <div className="app-sidebar-foot">
           <UserBadge user={user} />
-          <p className="sidebar-kicker">User-approved anchor access</p>
+          <p className="sidebar-kicker">Optional on-chain publishing</p>
           <p>
-            Mandate never holds keys or signs transactions. Your wallet can
-            approve optional hash anchors and pay the network fee.
+            Verify hashes without a wallet. To publish one on chain, connect a
+            wallet and approve the transaction yourself.
           </p>
           <Link href="/app/sources">Check sources</Link>
         </div>

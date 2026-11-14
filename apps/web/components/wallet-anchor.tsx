@@ -273,9 +273,9 @@ export function WalletAnchor({
     <section className="card wallet-anchor-card">
       <div className="card-head">
         <div>
-          <p className="field-label">User-paid on-chain proof</p>
-          <h2>Anchor this hash</h2>
-          <p>{validHash ? "Connect a wallet and approve the transaction. Mandate never sees your private key." : "Connect your wallet here, then enter a hash above when you are ready to anchor."}</p>
+          <p className="field-label">Optional on-chain publishing</p>
+          <h2>Publish this hash</h2>
+          <p>{validHash ? "Connect a wallet only if you want to publish this hash. You approve and pay for the transaction." : "Enter a valid hash above before publishing it on chain."}</p>
         </div>
       </div>
       <div className="card-body">

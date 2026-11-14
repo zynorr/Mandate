@@ -50,9 +50,9 @@ export default async function AnchorsPage({
         title="Anchor registry"
         description={
           <>
-            Check whether a policy hash, intent fingerprint, or report
-            fingerprint is recorded on {network}. Mandate reads the registry;
-            you can connect a wallet below to write an anchor yourself.
+            Check a hash without connecting a wallet. If it is not recorded,
+            you can optionally publish it below and pay the {network} network
+            fee from your wallet.
           </>
         }
       />
@@ -103,8 +103,8 @@ export default async function AnchorsPage({
       <section className="card anchor-panel">
         <div className="card-head">
           <div>
-            <h2>Check a content hash</h2>
-            <p>Policy hashes, intent fingerprints, and report fingerprints.</p>
+          <h2>Verify a hash</h2>
+          <p>No wallet required. Paste a policy, intent, report, or evidence hash.</p>
           </div>
         </div>
         <div className="card-body">
@@ -126,8 +126,8 @@ export default async function AnchorsPage({
             </div>
             <div className="form-actions">
               <p className="form-actions-note">
-                Anchors are optional on-chain records. Connect your wallet when
-                you want to create one and pay the network fee yourself.
+                Verification is read-only. Publishing is optional and requires a
+                wallet transaction that you approve and pay for.
               </p>
               <button type="submit" className="button button-ink">
                 <AnchorIcon size={15} />
