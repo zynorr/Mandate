@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createPublicClient,
   createWalletClient,
@@ -10,16 +10,14 @@ import {
   type Hex,
 } from "viem";
 
+type WalletProvider = {
+  isMetaMask?: boolean;
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+};
+
 declare global {
   interface Window {
-    ethereum?: {
-      isMetaMask?: boolean;
-      providers?: Array<{
-        isMetaMask?: boolean;
-        request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-      }>;
-      request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-    };
+    ethereum?: WalletProvider & { providers?: WalletProvider[] };
   }
 }
 
@@ -55,7 +53,7 @@ function errorMessage(error: unknown): string {
   return "The wallet request could not be completed.";
 }
 
-function walletProvider() {
+function providerFromWindow(): WalletProvider | null {
   const injected = window.ethereum;
   if (!injected) return null;
   return injected.providers?.find((provider) => provider.isMetaMask) ?? injected;
@@ -88,17 +86,32 @@ export function WalletAnchor({
   registryAddress: Address;
   explorerUrl: string;
 }) {
+  const [detectedProvider, setDetectedProvider] = useState<WalletProvider | null>(
+    () => (typeof window === "undefined" ? null : providerFromWindow()),
+  );
   const [kind, setKind] = useState<(typeof kinds)[number][0]>("report");
   const [account, setAccount] = useState<Address | null>(null);
   const [status, setStatus] = useState<"idle" | "connecting" | "sending" | "waiting" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
   const [transactionHash, setTransactionHash] = useState<Hex | null>(null);
 
+  useEffect(() => {
+    const announce = (event: Event) => {
+      const detail = (event as CustomEvent<{ provider?: WalletProvider; info?: { rdns?: string } }>).detail;
+      if (detail?.provider && (detail.provider.isMetaMask || detail.info?.rdns?.includes("metamask"))) {
+        setDetectedProvider(detail.provider);
+      }
+    };
+    window.addEventListener("eip6963:announceProvider", announce);
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+    return () => window.removeEventListener("eip6963:announceProvider", announce);
+  }, []);
+
   async function connectWallet(): Promise<Address | null> {
-    const provider = walletProvider();
+    const provider = detectedProvider ?? providerFromWindow();
     if (!provider) {
       setStatus("error");
-      setMessage("No browser wallet found. Install MetaMask or another EIP-1193 wallet.");
+      setMessage("MetaMask was not detected. Open Mandate in a browser with the MetaMask extension enabled, or use MetaMask Mobile's in-app browser.");
       return null;
     }
     const chain = {
@@ -124,10 +137,10 @@ export function WalletAnchor({
   }
 
   async function connectAndAnchor() {
-    const provider = walletProvider();
+    const provider = detectedProvider ?? providerFromWindow();
     if (!provider) {
       setStatus("error");
-      setMessage("No browser wallet found. Install MetaMask or another EIP-1193 wallet.");
+      setMessage("MetaMask was not detected. Open Mandate in a browser with the MetaMask extension enabled, or use MetaMask Mobile's in-app browser.");
       return;
     }
     if (!/^0x[0-9a-fA-F]{64}$/.test(contentHash)) {
