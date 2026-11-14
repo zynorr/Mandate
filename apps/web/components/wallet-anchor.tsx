@@ -177,6 +177,9 @@ export function WalletAnchor({
       transport: custom(provider),
     });
     const [connectedAccount] = await walletClient.requestAddresses();
+    if (!connectedAccount) {
+      throw new Error("MetaMask did not return an account. Approve account access and try again.");
+    }
     await ensureWalletChain(provider, {
       chainId,
       networkName,
@@ -215,6 +218,9 @@ export function WalletAnchor({
         transport: custom(provider),
       });
       const [connectedAccount] = await walletClient.requestAddresses();
+      if (!connectedAccount) {
+        throw new Error("MetaMask did not return an account. Approve account access and try again.");
+      }
       await ensureWalletChain(provider, {
         chainId,
         networkName,
