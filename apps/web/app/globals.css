@@ -3416,6 +3416,28 @@ code,
   overflow-wrap: anywhere;
 }
 
+@media (max-width: 640px) {
+  .wallet-anchor-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wallet-anchor-controls .field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .wallet-anchor-controls .button {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .wallet-anchor-card .card-head p:not(.field-label) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+
 .anchor-form {
   display: grid;
   gap: 20px;

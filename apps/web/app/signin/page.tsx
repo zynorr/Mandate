@@ -66,9 +66,9 @@ export default async function SignInPage({
               <div>
                 <ShieldIcon size={18} />
                 <p>
-                  <strong>No wallet access.</strong> GitHub identifies your
-                  workspace. Mandate never connects a wallet, holds keys, or
-                  signs transactions.
+                  <strong>No wallet custody.</strong> GitHub identifies your
+                  workspace. Optional wallet actions are approved directly by
+                  you; Mandate never sees keys or signs transactions.
                 </p>
               </div>
               <div>

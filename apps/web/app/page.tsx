@@ -80,7 +80,7 @@ export default function HomePage() {
                   </a>
                 </div>
                 <div className="hero-footnote">
-                  <span>Read-only app</span>
+                  <span>Review-first app</span>
                   <span>No custody or signing</span>
                   <span>
                     {network} · {config.chainId}

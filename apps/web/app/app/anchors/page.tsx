@@ -52,7 +52,7 @@ export default async function AnchorsPage({
           <>
             Check whether a policy hash, intent fingerprint, or report
             fingerprint is recorded on {network}. Mandate reads the registry;
-            it does not write to it.
+            you can connect a wallet below to write an anchor yourself.
           </>
         }
       />

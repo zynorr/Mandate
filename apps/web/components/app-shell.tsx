@@ -40,10 +40,10 @@ export function AppShell({
         <AppNav agents={shellAgents(agents)} />
         <div className="app-sidebar-foot">
           <UserBadge user={user} />
-          <p className="sidebar-kicker">Read-only chain access</p>
+          <p className="sidebar-kicker">User-approved anchor access</p>
           <p>
-            Mandate never holds keys, signs transactions, or submits
-            UserOperations.
+            Mandate never holds keys or signs transactions. Your wallet can
+            approve optional hash anchors and pay the network fee.
           </p>
           <Link href="/app/sources">Check sources</Link>
         </div>
